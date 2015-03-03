@@ -1,0 +1,8 @@
+This code will not compile correctly when running ‘make’, because some rules are missing.
+
+One way to circumvent this problem is to copy the following “Release+Asserts” folder from CLAP’s built version of klee:
+- runtime/Intrinsic/Release+Asserts/
+- runtime/klee-libc/Release+Asserts/
+- runtime/POSIX/Release+Asserts/ 
+
+TODO: correct this!!

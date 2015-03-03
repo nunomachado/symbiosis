@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/llvm-project/!svn/ver/110325/klee/trunk/stp/sat
+END
+SolverTypes.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/llvm-project/!svn/ver/110325/klee/trunk/stp/sat/SolverTypes.h
+END
+LICENSE
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/llvm-project/!svn/ver/72205/klee/trunk/stp/sat/LICENSE
+END
+VarOrder.h
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/llvm-project/!svn/ver/100391/klee/trunk/stp/sat/VarOrder.h
+END
+Heap.h
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/llvm-project/!svn/ver/100391/klee/trunk/stp/sat/Heap.h
+END
+Solver.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/llvm-project/!svn/ver/100392/klee/trunk/stp/sat/Solver.cpp
+END
+Sort.h
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/llvm-project/!svn/ver/100391/klee/trunk/stp/sat/Sort.h
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/llvm-project/!svn/ver/102875/klee/trunk/stp/sat/Makefile
+END
+Simplifier.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/llvm-project/!svn/ver/100391/klee/trunk/stp/sat/Simplifier.cpp
+END
+Solver.h
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/llvm-project/!svn/ver/100392/klee/trunk/stp/sat/Solver.h
+END
+Global.h
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/llvm-project/!svn/ver/100391/klee/trunk/stp/sat/Global.h
+END

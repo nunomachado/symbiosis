@@ -1,0 +1,12 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1344\cocoasubrtf720
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
+
+\f0\fs24 \cf0 To compile Symbiosis LLVM pass, proceed as follows:\
+\
+1) Create a folder named "SymbiosisPass" in /path/to/llvm-2.9/lib/Transforms\
+2) Change Makefile in /path/to/llvm-2.9/lib/Transforms/Makefile by adding SymbiosisPath to PARALLEL_DIRS (i.e. "PARALLEL_DIRS = Utils Instrumentation Scalar InstCombine IPO Hello SymbiosisPass")\
+3) run make in llvm-2.9 home folder\
+4) use pass as follows: opt -load /path/to/llvm-2.9/Release+Asserts/lib/SymbiosisBBPass.so -symbiosisBB file.bc -o file_inst.bc}

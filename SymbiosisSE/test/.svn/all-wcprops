@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 49
+/svn/llvm-project/!svn/ver/154367/klee/trunk/test
+END
+TestRunner.sh
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/llvm-project/!svn/ver/72205/klee/trunk/test/TestRunner.sh
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/llvm-project/!svn/ver/102872/klee/trunk/test/Makefile
+END
+lit.cfg
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/llvm-project/!svn/ver/102872/klee/trunk/test/lit.cfg
+END
+Makefile.tests
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/llvm-project/!svn/ver/72205/klee/trunk/test/Makefile.tests
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/llvm-project/!svn/ver/72205/klee/trunk/test/README
+END
+lit.site.cfg.in
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/llvm-project/!svn/ver/102872/klee/trunk/test/lit.site.cfg.in
+END
