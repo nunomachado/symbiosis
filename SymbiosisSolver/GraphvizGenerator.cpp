@@ -118,7 +118,7 @@ void graphgen::genAllGraphSchedules(vector<string> failSchedule, map<EventPair, 
     
     //** compute data-dependencies for failSchedule
     //cout << "Failing schedule:\n";
-    for(int oit = failSchedule.size()-1; oit >= 0;oit--)
+    for(int oit = (int)failSchedule.size()-1; oit >= 0;oit--)
     {
         string opA = failSchedule[oit];
         
@@ -169,7 +169,7 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
     dependIdsAlt.clear();
     
     //** compute data-dependencies for AltSchedule
-    for(int oit = altSchedule.size()-1; oit >= 0;oit--)
+    for(int oit = (int)altSchedule.size()-1; oit >= 0;oit--)
     {
         string opA = altSchedule[oit];
         

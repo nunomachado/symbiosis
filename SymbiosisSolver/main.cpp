@@ -251,8 +251,11 @@ void parse_constraints(string symbFilePath)
                 if(tmp.back() == '$')
                 {
                     token = strtok (buf,"$"); //token is the written value
-                    if(token == NULL)
-                        token = "0";
+                    if(token == NULL){
+                        //token = "0";
+                        token[0] = '0';
+                        token[1] = '\0';
+                    }
                     RWOperation* op = new RWOperation(threadId, var, 0, line, filename, token, true);
                     
                     //update variable id
@@ -905,7 +908,7 @@ bool verifyConstraintModel(ConstModelGen *cmgen)
  */
 bool updateCounters(vector<string> keys, vector<int> *traceCounterByThread)
 {
-    for(int i = keys.size()-1; i>=0; i--)
+    for(int i = (int)keys.size()-1; i>=0; i--)
     {
         string tid = keys[i];
         if((*traceCounterByThread)[i] < symTracesByThread[tid].size()-1)

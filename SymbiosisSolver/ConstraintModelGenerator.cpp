@@ -27,7 +27,7 @@ ConstModelGen::ConstModelGen()
 
 void ConstModelGen::createZ3Solver(){
     
-    Z3Solver* z3solver = new Z3Solver();
+    //Z3Solver* z3solver = new Z3Solver();
     numLO = 0;
     numRW = 0;
     numMO = 0;
@@ -259,7 +259,7 @@ void ConstModelGen::addReadWriteConstraints(map<string, vector<RWOperation> > re
     //write all read-write constraints previously stored in memory(not being used at this moment)
     /*for(vector<string>::iterator it = orStrSet.begin(); it != orStrSet.end(); ++it)
     {
-		string label = "RWC" + util::stringValueOf(labelCounter); //** label to uniquely identify this constraint
+		string label = "RWC" + util::stringValueOf(labelCounter); // label to uniquely identify this constraint
         labelCounter++;
         z3solver.writeLineZ3(z3solver.postNamedAssert(z3solver.cOr(*it),label));
     }*/
@@ -512,7 +512,6 @@ void ConstModelGen::addWaitSignalConstraints(map<string, vector<SyncOperation> >
     z3solver.writeLineZ3("(echo \"WAIT-SIGNAL CONSTRAINTS -----\")\n");
     
     int totalVars = 0;
-    int max = 0;
     int labelCounter = 0;
     map<string,vector<string> > signalBinaryVars;   //map signal id -> vector of all binary vars corresponding to this signal operation
     //map<string,string > waitConditions;             //map wait id (W-obj-tid) -> string corresponding to the constraints for all wait operations on the same object
@@ -586,7 +585,7 @@ void ConstModelGen::addAvisoConstraints(std::map<std::string, std::vector<Operat
     map<string, vector<Operation*> > tmpOperationsByThread = operationsByThread; //we create a tmp copy in order to freely erase entries, thus speeding up the search
     
     string constraint;
-    bool found = false; //indicates whether a given event was already found in the operations' set
+    //bool found = false; //indicates whether a given event was already found in the operations' set
     for(AvisoEventVector::iterator avisoit = fulltrace.begin(); avisoit != fulltrace.end(); ++avisoit)
     {
         string tid = (*avisoit).tid;
