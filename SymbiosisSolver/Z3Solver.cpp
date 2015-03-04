@@ -120,8 +120,8 @@ bool Z3Solver::checkSat()
         }
         else if(line.find("(define-fun") != std::string::npos)  //its an operation definition
         {
-            int posBegin = line.find("(define-fun ") + 12;  //place posBegin in the first char of the order operation
-            int posEnd = line.find("()") - 1;               //place posEnd in the last char of the order operation
+            int posBegin = (int)line.find("(define-fun ") + 12;  //place posBegin in the first char of the order operation
+            int posEnd = (int)line.find("()") - 1;               //place posEnd in the last char of the order operation
             
             opName = line.substr(posBegin, posEnd-posBegin);
             
@@ -132,8 +132,8 @@ bool Z3Solver::checkSat()
         }
         else if(isOrderOp) //its an index for a previous read variable definition
         {
-            int posBegin = line.find_last_of(" ") + 1;  //place posBegin in the first char of the value
-            int posEnd = line.find_last_of(")");        //place posEnd in the last char of the value
+            int posBegin = (int)line.find_last_of(" ") + 1;  //place posBegin in the first char of the value
+            int posEnd = (int)line.find_last_of(")");        //place posEnd in the last char of the value
             string index = line.substr(posBegin, posEnd-posBegin);
             std::stringstream s_str(index);
             int ind;
@@ -143,8 +143,8 @@ bool Z3Solver::checkSat()
         }
         else if(isReadOp)
         {
-            int posBegin = line.find_last_of(" ") + 1;  //place posBegin in the first char of the value
-            int posEnd = line.find_last_of(")");        //place posEnd in the last char of the value
+            int posBegin = (int)line.find_last_of(" ") + 1;  //place posBegin in the first char of the value
+            int posEnd = (int)line.find_last_of(")");        //place posEnd in the last char of the value
             string index = line.substr(posBegin, posEnd-posBegin);
             readValues[opName] = index;//stoi(index);
             isReadOp = false;
@@ -249,15 +249,15 @@ bool Z3Solver::checkSat()
             if(op.empty())
                 continue;
             
-            posBegin = op.find_first_of("-", op.find_first_of("-") + 1)+1;
+            posBegin = (int)op.find_first_of("-", op.find_first_of("-") + 1)+1;
             while(op.at(posBegin) == '>'){
-                posBegin = op.find_first_of("-", posBegin) + 1;
+                posBegin = (int)op.find_first_of("-", posBegin) + 1;
             }
             
             //for read operations, we have to consider the readId as well
-            posEnd = op.find_last_of("-");
+            posEnd = (int)op.find_last_of("-");
             if(posEnd <= posBegin)
-                posEnd = op.find_first_of("@");
+                posEnd = (int)op.find_first_of("@");
             
             string tid = op.substr(posBegin, posEnd - posBegin);
             
@@ -354,7 +354,7 @@ bool Z3Solver::solveWithSolution(vector<string> solution, bool invertBugCond)
     startTime = time(NULL);
     infile.close();
     
-    numOps = solution.size();
+    numOps = (int)solution.size();
     bool success = checkSat();
     
     return success;
