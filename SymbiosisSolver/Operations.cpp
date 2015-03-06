@@ -73,7 +73,7 @@ void Operation::setFilename(string f){
 
 void Operation::print()
 {
-    cout << "[" << threadId << "] Op-" << var << "-" << id << "@" << line << "\n";
+    cout << "[" << threadId << "] Op-" << var << "-" << id << "&" << filename << "@" << line << "\n";
 }
 
 string Operation::getOrderConstraintName()
@@ -117,7 +117,7 @@ string RWOperation::getConstraintName()
     string ret;
     if(isWrite)
     {
-        ret = "W-" + var + "-" + threadId + "-" + util::stringValueOf(id) + "@" + util::stringValueOf(line);
+        ret = "W-" + var + "-" + threadId + "-" + util::stringValueOf(id) + "&"+ filename +"@" + util::stringValueOf(line);
     }
     else
     {
@@ -131,11 +131,11 @@ string RWOperation::getOrderConstraintName()
     string ret;
     if(isWrite)
     {
-        ret = "OW-" + var + "-" + threadId + "-" + util::stringValueOf(id) + "@" + util::stringValueOf(line);
+        ret = "OW-" + var + "-" + threadId + "-" + util::stringValueOf(id) + "&"+ filename +"@" + util::stringValueOf(line);
     }
     else
     {
-        ret = "OR-" + var + "-" + threadId + "-" + util::stringValueOf(id) + "@" + util::stringValueOf(line);  //we must R-var-id as constraint name in order to conform with the path constraints
+        ret = "OR-" + var + "-" + threadId + "-" + util::stringValueOf(id) + "&"+ filename +"@" + util::stringValueOf(line);
     }
     return ret;
 }
@@ -160,11 +160,11 @@ void RWOperation::print()
 {
     if(isWrite)
     {
-        cout << "[" << threadId << "] W-" << var << "-" << id <<" = $" << value << "$@" << line << "\n";
+        cout << "[" << threadId << "] W-" << var << "-" << id <<" = $" << value << "$&" << filename << "@" << line << "\n";
     }
     else
     {
-        cout << "[" << threadId << "] R-" << var << "-" << id << "@" << line << "\n";
+        cout << "[" << threadId << "] R-" << var << "-" << id << "&" << filename << "@" << line << "\n";
     }
 }
 
@@ -218,8 +218,8 @@ int LockPairOperation::getUnlockVarId(){
 string LockPairOperation::getLockOrderConstraintName()
 {
     string ret;
-    ret = "OS-lock_" + var + "-" + threadId + "-" + util::stringValueOf(id) + "@" + util::stringValueOf(line);
-    
+    ret = "OS-lock_" + var + "-" + threadId + "-" + util::stringValueOf(id) + "&"+ filename + "@" + util::stringValueOf(line);
+    //OS-lock_       416680994     -1                  -0                      &SimpleAssertKLEE.c     @16
     return ret;
 }
 
@@ -227,9 +227,9 @@ string LockPairOperation::getUnlockOrderConstraintName()
 {
     string ret;
     if(fakeUnlock==true)
-        ret = "OS-unlockFake_" + var + "-" + threadId + "-" + util::stringValueOf(unlockVarId) + "@" + util::stringValueOf(unlockLine);
+        ret = "OS-unlockFake_" + var + "-" + threadId + "-" + util::stringValueOf(unlockVarId) + "&" + filename + "@" + util::stringValueOf(unlockLine);
     else
-        ret = "OS-unlock_" + var + "-" + threadId + "-" + util::stringValueOf(unlockVarId) + "@" + util::stringValueOf(unlockLine);
+        ret = "OS-unlock_"     + var + "-" + threadId + "-" + util::stringValueOf(unlockVarId) + "&" + filename + "@" + util::stringValueOf(unlockLine);
     
     return ret;
 }
@@ -255,7 +255,7 @@ bool LockPairOperation::isFakeUnlock(){
 
 void LockPairOperation::print()
 {
-    cout << "[" << threadId << "] " << var << "-" << id << "/"<< unlockVarId << " Lock@" << line << " Unlock@" << unlockLine << "\n";
+    cout << "[" << threadId << "] " << var << "-" << id << "/"<< unlockVarId << "&" << filename << "Lock@" << line << " Unlock@" << unlockLine << "\n";
 }
 
 //** class SyncOperation ***************
@@ -282,10 +282,10 @@ string SyncOperation::getConstraintName()
     string ret;
     //ret = "S-" + type + "-" + threadId;
     if(var.empty()){
-        ret = "S-" + type + "-" + threadId + "@" + util::stringValueOf(line);
+        ret = "S-" + type + "-" + threadId + "&" +filename + "@" + util::stringValueOf(line);
     }
     else{
-        ret = "S-" + type + "_" + var + "-" + threadId + "-" + util::stringValueOf(id) + "@" + util::stringValueOf(line);
+        ret = "S-" + type + "_" + var + "-" + threadId + "-" + util::stringValueOf(id) + "&" +filename + "@" + util::stringValueOf(line);
     }
     return ret;
 }
@@ -295,10 +295,10 @@ string SyncOperation::getOrderConstraintName()
     string ret;
     
     if(var.empty()){
-        ret = "OS-" + type + "-" + threadId + "@" + util::stringValueOf(line);
+        ret = "OS-" + type + "-" + threadId + "&" +filename + "@" + util::stringValueOf(line);
     }
     else{
-        ret = "OS-" + type + "_" + var + "-" + threadId + "-" + util::stringValueOf(id) + "@" + util::stringValueOf(line);
+        ret = "OS-" + type + "_" + var + "-" + threadId + "-" + util::stringValueOf(id) + "&" +filename + "@" + util::stringValueOf(line);
     }
     
     return ret;
@@ -307,7 +307,7 @@ string SyncOperation::getOrderConstraintName()
 void SyncOperation::print()
 {
     if(var.empty())
-        cout << "[" << threadId << "] " << type << "@" << line << "\n";
+        cout << "[" << threadId << "] " << type << "&" << filename << "@" << line << "\n";
     else
-        cout << "[" << threadId << "] " << type << "_" << var << "-" << id << "@" << line << "\n";
+        cout << "[" << threadId << "] " << type << "_" << var << "-" << id << "&" << filename << "@" << line << "\n";
 }

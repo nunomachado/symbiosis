@@ -11,10 +11,23 @@
 #include <sstream>
 #include <set>
 #include <algorithm>
+#include <unistd.h>
 
+#include <fcntl.h> //for read
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include "Z3Solver.h"
 #include "GraphvizGenerator.h"
 #include "Util.h"
 #include "Parameters.h"
+#include <string>
+#include <iostream>
+#include <string>
+#include <algorithm>
+
+#define LINEMAX 256
+
 
 using namespace std;
 
@@ -32,10 +45,16 @@ map<string,string> exclusiveAlt;    //same as above, but only for the unique dep
 map<string,int> dependIdsFail; //map: operation -> position the failing schedule
 map<string,int> dependIdsAlt;  //map: operation -> position the alt schedule
 
+map<int,string> lockVariables; //map: lockID -> lockVariable
+
 set<string> relevantThreads; //set containing the threads that are relevant (i.e. that have operations with exclusive data-dependencies)
 
 int altCounter = 0; //counts the number of alternate schedules (used to name the output files)
-
+pid_t lineCode_pid;                          //id of the process running getCodeLine()
+int procR, procW;                           //pipes to read from and write to the process running getCodeLine()
+std::vector<std::string> operationsVars;    //vector containing the operation variables
+std::vector<std::string> orderVars;         //vector containing the operation order variables
+int numOps;                             //number of operations to ordered
 
 /*
  * Returns a port name if the operation is involved in a dependence
@@ -82,14 +101,106 @@ string getAltDependencePort(string op)
 string cleanOperation(string op)
 {
     size_t pos = op.find(">");
+    size_t pos2 = op.find("&");
     
     if(pos != string::npos)
     {
         op = op.erase(pos,1);
     }
     
+    if(pos2 != string::npos)
+    {
+        op.erase( std::remove( op.begin(), op.end(),'&'), op.end() ) ;
+        //op.erase(std::remove_if(op.begin(), op.end(), std::not1(std::ptr_fun(isalnum))), line.end());
+    }
+    
     return op;
 }
+
+
+//expecting something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45 to get "SimpleAssertKLEE.c"
+string  getFilenameOp(string op)
+{
+    int filenameInitP = (int)op.find("&")+1;
+    int filenameEndP = (int)op.find("@");
+    string fileNameOp = op.substr(filenameInitP,filenameEndP-filenameInitP);
+    return fileNameOp;
+
+}
+
+//expecting something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45 to get "45"
+int  getLineOp(string op)
+{
+    int lineInitP = (int)op.find("@")+1;
+    const char *cstr = op.substr(lineInitP,op.length()).c_str();
+    return (int)atoi(cstr);
+}
+
+//expecting something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45 to get "45"
+int getVarIDlock(string op)
+{
+    int initP = (int)op.find("_")+1;
+    op = op.substr(initP,op.length());
+    int endP = (int)op.find("-");
+    int varIDlock = (int)atoi(op.substr(0,endP).c_str());
+    return varIDlock;
+}
+
+
+
+
+//pthread_mutex_lock(&lock);
+string getVarNameFromCodeLine(string codeLine)
+{
+    int init = (int)codeLine.find("(")+1;
+    int end = (int)codeLine.find(")");
+    string varName = codeLine.substr(init,end-init);
+    return varName;
+
+}
+
+
+string getLockVarName(string filename, int line, int lockVarID)
+{
+    string codeLine = graphgen::getCodeLine(line, filename);
+    string lockVarName = getVarNameFromCodeLine(codeLine);
+    return lockVarName;
+    
+    
+}
+
+
+
+void storePair(int lockVarID,string lockVarName){
+    lockVariables.insert(pair<int,string>(lockVarID,lockVarName));
+//    map<int,string> lockVariables; //map: lockID -> lockVariable
+}
+
+
+string getVarName(int varID){
+    return lockVariables[varID];
+}
+
+//Store a lockVarName with its ID
+void fillMaplockVariables(string op)
+{
+    //expecting something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45
+    string filename = getFilenameOp(op); // SimpleAssertKLEE.c
+    //cout << "\n\nFilename: "<< filename;
+    int line = getLineOp(op);          //45
+      //  cout << "\nline: "<< line;
+    int lockVarID = getVarIDlock(op);  //416680994
+        //cout << "\nvarID: "<< lockVarID;
+    string lockVarName = getLockVarName(filename,line,lockVarID);
+        //cout << "\nVarName: " << lockVarName;
+    storePair(lockVarID,lockVarName);
+    
+    string aux = getVarName(lockVarID);
+    cout << "\nMap " << aux;
+
+}
+
+
 
 
 /**
@@ -114,13 +225,16 @@ void graphgen::genAllGraphSchedules(vector<string> failSchedule, map<EventPair, 
     threadColors["9"] = "chocolate4";
     threadColors["10"] = "red";
     
-    
-    
     //** compute data-dependencies for failSchedule
     //cout << "Failing schedule:\n";
     for(int oit = (int)failSchedule.size()-1; oit >= 0;oit--)
     {
         string opA = failSchedule[oit];
+        
+        //fill map lockVariables
+        if(opA.find("OS-lock")!= string::npos){
+            fillMaplockVariables(opA);
+        }
         
         if(opA.find("OR-") == string::npos)
             continue;
@@ -169,7 +283,7 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
     dependIdsAlt.clear();
     
     //** compute data-dependencies for AltSchedule
-    for(int oit = (int)altSchedule.size()-1; oit >= 0;oit--)
+    for(int oit = altSchedule.size()-(float)1; oit >= 0;oit--)
     {
         string opA = altSchedule[oit];
         
@@ -538,11 +652,84 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
         fit++;
     }
     
-    
-    
     //draw graphviz file
     drawGraphviz(segsFail, segsAlt, failSchedule, altSchedule);
 }
+
+
+
+string makeInstrFriendly(string instruction){
+
+    int filenameP =  (int)instruction.find("&");
+    int lineP =      (int)instruction.find("@");
+    int isOSlock = (int)instruction.find("OS-lock");
+    int isOSunlock = (int)instruction.find("OS-unlock");
+    string friendlyInstr = instruction;
+    
+    if(string::npos != filenameP && string::npos != lineP){
+        int fileLength = lineP - filenameP - 1 ;
+        string filename = instruction.substr(filenameP+1,fileLength);
+        const char *cstr = instruction.substr(lineP+1,1000).c_str();
+        int line = (int)atoi(cstr);
+        if (string::npos != isOSlock) {
+            
+            //lock(&lock);
+            friendlyInstr = friendlyInstr.substr(0,filenameP);
+            string varID = friendlyInstr.substr(friendlyInstr.find("_")+1,friendlyInstr.length());
+            varID = varID.substr(0,varID.find("-"));
+            string lockVarName = getVarName((int)atoi(varID.c_str()));
+            friendlyInstr = filename + " L"+ cstr +" lock("+ lockVarName+");";
+            cout << "####\nIsto e um lock  :\n"+ friendlyInstr+"\nVarID"+lockVarName +"\n";
+            return friendlyInstr;
+        }
+        if (string::npos != isOSunlock) {
+            //unlock
+            friendlyInstr = friendlyInstr.substr(0,filenameP);
+            string varID = friendlyInstr.substr(friendlyInstr.find("_")+1,friendlyInstr.length());
+            varID = varID.substr(0,varID.find("-"));
+            string lockVarName = getVarName((int)atoi(varID.c_str()));
+            friendlyInstr = filename + " L"+ cstr +" unlock("+ lockVarName+");";
+            cout << "####\nIsto e um unLock  :\n"+ friendlyInstr+"\nVarID"+lockVarName +"\n";
+            return friendlyInstr;
+        }
+        string codeLine = graphgen::getCodeLine(line, filename);
+        friendlyInstr = filename+" L"+codeLine;
+    }
+    return friendlyInstr;
+}
+
+
+string graphgen::getCodeLine(int line, string filename)
+{
+    numOps = 0;
+    
+    string dir ="cd /Users/drk/Desktop/symbiosisProj/Tests/simpleAssert";
+    string line2code = "nl -ba "+ filename+" | grep  \"  "+ util::stringValueOf(line) +  "\\t\"";
+    string sysExeGetCodeLine = (dir+"; "+line2code);
+    char *command = (char *)sysExeGetCodeLine.c_str();
+    
+    lineCode_pid = util::popen2(command, &procW, &procR);
+    if (!lineCode_pid)
+    {
+        perror("Problems with getCodeLine pipe");
+        exit(1);
+    }
+    
+    string ret;
+    char c[LINEMAX];
+    read(procR,c,1);
+    while(c[0]!='\n')
+    {
+        ret = ret + c[0];
+        read(procR,c,1);
+        //getline(procRDK,c);
+    }
+    ret = ret.substr(ret.find_first_of("1234567890")); //remove de /x01 caracter
+    cout  << "\ncodeLine: "<< ret ;
+    return ret;
+    
+}
+
 
 /*
  * Draws the graphviz file for a given failing schedule and alternate schedule
@@ -583,16 +770,28 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
         outFile << "\tlabel=<<table border=\"0\" cellspacing=\"0\">\n";
         outFile << "\t\t<tr><td border=\"1\" bgcolor=\""<< threadColors[fseg.tid]<<"\"><font point-size=\"14\">T"<<fseg.tid<<"</font></td></tr>\n";
         
+        
+        /*
+         *ORIGIN
+         ThreadSegment fseg = segsFail[i];
+         outFile << "f" << i << " [fontname=\"Helvetica\", fontsize=\"11\", shape=none, margin=0,\n";
+         outFile << "\tlabel=<<table border=\"0\" cellspacing=\"0\">\n";
+         outFile << "\t\t<tr><td border=\"1\" bgcolor=\""<< threadColors[fseg.tid]<<"\"><font point-size=\"14\">T"<<fseg.tid<<"</font></td></tr>\n";
+         */
+        
         for(int j = fseg.initPos; j <= fseg.endPos; j++)
         {
             string op = failSchedule[j];
             string port = getFailDependencePort(op);
+            string friendlyStr = makeInstrFriendly(op);
+            
             
             if(port.empty()){
-                outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << cleanOperation(op) << "</td></tr>\n";
+                outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << cleanOperation(friendlyStr) << "</td></tr>\n";
+                //outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << codeLine << "</td></tr>\n";
             }
             else{
-                outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor=\"red\">" << cleanOperation(op) << "</td></tr>\n";
+                outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor=\"red\">" << cleanOperation(friendlyStr) << "</td></tr>\n";
                 opToPort[("f"+op)] = "f"+util::stringValueOf(i)+":"+port+":e";
             }
             numEventsDifDebug++;
@@ -636,26 +835,20 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
             
             //we don't want to print the failure operation in alt schedules
             if(op.find("FAILURE")!=string::npos){
-                if(aseg.endPos-aseg.initPos == 0) //replace FAILURE for AssertOK if block only contains one operation
-                    op.replace(3, 7, "AssertOK");
+                if(aseg.endPos-aseg.initPos == 0) //replace FAILURE for exit if block only contains one operation
+                    op.replace(3, 7, "exit");
                 else
                     continue;
             }
-            else if (op.find("AssertFAIL")!=string::npos)
-            {
-                //if(aseg.endPos-aseg.initPos == 0) //replace AssertFail for AssertOK if block only contains one operation
-                    op.replace(3, 10, "AssertOK");
-               // else
-                 //   continue;
-            }
             
             string port = getAltDependencePort(op);
+            string friendlyStr = makeInstrFriendly(op);
             
             if(port.empty()){
-                outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << cleanOperation(op) << "</td></tr>\n";
+                outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << cleanOperation(friendlyStr) << "</td></tr>\n";
             }
             else{
-                outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor=\"green\">" << cleanOperation(op) << "</td></tr>\n";
+                outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor=\"green\">" << cleanOperation(friendlyStr) << "</td></tr>\n";
                 opToPort[("a"+op)] = "a"+util::stringValueOf(i)+":"+port+":e";
             }
         }
@@ -677,4 +870,3 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
     outFile << "}\n";
     outFile.close();
 }
-
