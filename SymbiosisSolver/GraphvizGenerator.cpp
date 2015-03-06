@@ -667,29 +667,26 @@ string makeInstrFriendly(string instruction){
     string friendlyInstr = instruction;
     
     if(string::npos != filenameP && string::npos != lineP){
-        int fileLength = lineP - filenameP - 1 ;
-        string filename = instruction.substr(filenameP+1,fileLength);
-        const char *cstr = instruction.substr(lineP+1,1000).c_str();
-        int line = (int)atoi(cstr);
-        if (string::npos != isOSlock) {
+        //int fileLength = lineP - filenameP - 1 ;
+        //string filename = instruction.substr(filenameP+1,fileLength);
+        //const char *cstr = instruction.substr(lineP+1,1000).c_str();
+        
+        string filename = getFilenameOp(friendlyInstr);
+        //int line = (int)atoi(cstr);
+        int line = getLineOp(friendlyInstr);
+        if (string::npos != isOSlock || string::npos != isOSunlock) {
+            //friendlyInstr = friendlyInstr.substr(0,filenameP);
             
-            //lock(&lock);
-            friendlyInstr = friendlyInstr.substr(0,filenameP);
-            string varID = friendlyInstr.substr(friendlyInstr.find("_")+1,friendlyInstr.length());
-            varID = varID.substr(0,varID.find("-"));
-            string lockVarName = getVarName((int)atoi(varID.c_str()));
-            friendlyInstr = filename + " L"+ cstr +" lock("+ lockVarName+");";
-            cout << "####\nIsto e um lock  :\n"+ friendlyInstr+"\nVarID"+lockVarName +"\n";
-            return friendlyInstr;
-        }
-        if (string::npos != isOSunlock) {
-            //unlock
-            friendlyInstr = friendlyInstr.substr(0,filenameP);
-            string varID = friendlyInstr.substr(friendlyInstr.find("_")+1,friendlyInstr.length());
-            varID = varID.substr(0,varID.find("-"));
-            string lockVarName = getVarName((int)atoi(varID.c_str()));
-            friendlyInstr = filename + " L"+ cstr +" unlock("+ lockVarName+");";
-            cout << "####\nIsto e um unLock  :\n"+ friendlyInstr+"\nVarID"+lockVarName +"\n";
+            //string varID = friendlyInstr.substr(friendlyInstr.find("_")+1,friendlyInstr.length());
+            //varID = varID.substr(0,varID.find("-"));
+            int varID = getVarIDlock(friendlyInstr);
+            //string lockVarName = getVarName((int)atoi(varID.c_str()));
+            string lockVarName = getVarName(varID);
+            string lockStr = " lock(";
+            if (string::npos != isOSunlock) {
+                lockStr = " unlock(";
+            }
+            friendlyInstr = filename + " L"+ to_string(line) + lockStr + lockVarName+");";
             return friendlyInstr;
         }
         string codeLine = graphgen::getCodeLine(line, filename);
