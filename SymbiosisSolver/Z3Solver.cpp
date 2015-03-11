@@ -236,6 +236,9 @@ bool Z3Solver::checkSat()
             int posEnd = 0;
             
             string op = globalOrder[i];
+            //APAGARf
+            //cout << "\nOP Golbal Order : " << op <<"\n"  ;
+            
             
             //add solution constraint to file
             if(i < globalOrder.size()-1

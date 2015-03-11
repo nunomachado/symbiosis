@@ -42,6 +42,7 @@ vector<SyncOperation> syncset;
 vector<PathOperation> pathset;
 map<string, map<string, stack<LockPairOperation> > > lockpairStack;   //map object id -> (map thread id -> stack with incomplete locking pairs)
 int numIncLockPairs = 0;    //number of incomplete locking pairs, taking into account all objects
+//change location to parameters
 map<string, vector<Operation*> > operationsByThread;    //map thread id -> vector with thread's operations
 map<string, vector<string> > symTracesByThread;         //map thread id -> vector with the filenames of the symbolic traces
 vector<string> solution;                                //vector that stores a given schedule (i.e. solution) found by the solver (used in --fix-mode)
@@ -275,6 +276,7 @@ void parse_constraints(string symbFilePath)
                 }
                 else
                 {
+                    cout << tmp << "\n";
                     tmp.erase(0,1); //erase first '$'
                     string value = "";
                     while(tmp.back() != '$')
@@ -896,7 +898,8 @@ bool verifyConstraintModel(ConstModelGen *cmgen)
     syncset.clear();
     pathset.clear();
     lockpairStack.clear();
-    operationsByThread.clear();
+    //UNCOMMENT
+    //operationsByThread.clear();
     
     return success;
 }
@@ -1011,6 +1014,9 @@ void generateConstraintModel()
         {
             string tid = keys[i];
             parse_constraints(symTracesByThread[tid][traceCounterByThread[i]]);
+            
+            //APAGAR
+            //cout << "\n\n#\n " << tid << "\n#\n";
         }
         
         //debug: print constraints
@@ -1523,6 +1529,17 @@ int main(int argc, char *const* argv)
     {
         //parse_avisoTrace();
         generateConstraintModel();
+        //map<string, vector<Operation*> > operationsByThread;
+
+        
+        cout << "ENTROU" << operationsByThread.size()<< "<-- size\n";
+        vector<vector<Operation*>> v;
+        for(map<string, vector<Operation*>> ::iterator it = operationsByThread.begin(); it != operationsByThread.end(); ++it) {
+            v.push_back(it->second);
+            cout << it->second[0]->getLine() << "\n";
+        }
+        //APAGAR O COMMENT QUE FICOU A remover o clean da lista
+
     }
     
     return 0;
