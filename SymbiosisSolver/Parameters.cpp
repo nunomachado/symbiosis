@@ -21,6 +21,11 @@ std::string solutionFile = "";
 std::string assertThread = "";
 bool failedExec = false;
 
+std::vector<Operation> failScheduleOrd;
+std::map<std::string, std::vector<Operation*> > operationsByThread;    //map thread id -> vector with thread's operations
+
+
+
 std::vector<int> unsatCore;
 std::vector<std::string> bugCondOps;
 

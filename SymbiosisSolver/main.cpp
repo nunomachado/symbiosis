@@ -17,7 +17,6 @@
 #include <stack>
 #include <dirent.h>
 #include <algorithm>
-
 #include "Operations.h"
 #include "ConstraintModelGenerator.h"
 #include "Util.h"
@@ -26,7 +25,6 @@
 #include "GraphvizGenerator.h"
 
 using namespace std;
-
 
 
 map<string, vector<RWOperation> > readset;              //map var id -> vector with variable's read operations
@@ -42,8 +40,6 @@ vector<SyncOperation> syncset;
 vector<PathOperation> pathset;
 map<string, map<string, stack<LockPairOperation> > > lockpairStack;   //map object id -> (map thread id -> stack with incomplete locking pairs)
 int numIncLockPairs = 0;    //number of incomplete locking pairs, taking into account all objects
-//change location to parameters
-map<string, vector<Operation*> > operationsByThread;    //map thread id -> vector with thread's operations
 map<string, vector<string> > symTracesByThread;         //map thread id -> vector with the filenames of the symbolic traces
 vector<string> solution;                                //vector that stores a given schedule (i.e. solution) found by the solver (used in --fix-mode)
 
@@ -273,6 +269,7 @@ void parse_constraints(string symbFilePath)
                     
                     writeset[var].push_back(*op);
                     operationsByThread[threadId].push_back(op);
+                    
                 }
                 else
                 {
@@ -898,8 +895,7 @@ bool verifyConstraintModel(ConstModelGen *cmgen)
     syncset.clear();
     pathset.clear();
     lockpairStack.clear();
-    //UNCOMMENT
-    //operationsByThread.clear();
+    operationsByThread.clear();
     
     return success;
 }
@@ -1529,16 +1525,14 @@ int main(int argc, char *const* argv)
     {
         //parse_avisoTrace();
         generateConstraintModel();
-        //map<string, vector<Operation*> > operationsByThread;
-
         
-        cout << "ENTROU" << operationsByThread.size()<< "<-- size\n";
-        vector<vector<Operation*>> v;
-        for(map<string, vector<Operation*>> ::iterator it = operationsByThread.begin(); it != operationsByThread.end(); ++it) {
-            v.push_back(it->second);
-            cout << it->second[0]->getLine() << "\n";
+        /*
+        cout << failScheduleOrd.size()<< " size \n";
+        for(vector<Operation> ::iterator it = failScheduleOrd.begin(); it != failScheduleOrd.end(); ++it) {
+            cout << it->getLine() << "\n";
         }
-        //APAGAR O COMMENT QUE FICOU A remover o clean da lista
+        */
+        
 
     }
     

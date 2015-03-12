@@ -6,8 +6,13 @@
 //  Copyright (c) 2014 Nuno Machado. All rights reserved.
 //
 
-#ifndef __snorlaxsolver__KQueryParser__
-#define __snorlaxsolver__KQueryParser__
+//#ifndef __snorlaxsolver__KQueryParser__
+//#define __snorlaxsolver__KQueryParser__
+
+#ifndef __symbiosisSolver__KQueryParser__
+#define __symbiosisSolver__KQueryParser__
+
+
 
 #include <iostream>
 #include <string>

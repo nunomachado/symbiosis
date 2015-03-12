@@ -14,7 +14,6 @@
 #include <map>
 #include <vector>
 #include "Types.h"
-#endif /* defined(__symbiosisSolver__GraphvizGenerator__) */
 
 
 namespace graphgen{
@@ -27,3 +26,5 @@ namespace graphgen{
     
     void drawGraphviz(std::vector<ThreadSegment> segsFail, std::vector<ThreadSegment> segsAlt, std::vector<std::string> failSchedule, std::vector<std::string> altSchedule);
 }
+
+#endif /* defined(__symbiosisSolver__GraphvizGenerator__) */

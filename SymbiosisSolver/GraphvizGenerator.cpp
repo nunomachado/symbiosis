@@ -172,6 +172,7 @@ string getLockVarName(string filename, int line, int lockVarID)
 
 
 void storePair(int lockVarID,string lockVarName){
+
     lockVarName.erase( std::remove( lockVarName.begin(), lockVarName.end(),'&'), lockVarName.end() );
     lockVariables.insert(pair<int,string>(lockVarID,lockVarName));
 //    map<int,string> lockVariables; //map: lockID -> lockVariable
@@ -187,19 +188,17 @@ void fillMaplockVariables(string op)
 {
     //expecting something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45
     string filename = getFilenameOp(op); // SimpleAssertKLEE.c
-    cout << "\n\nFilename: "<< filename;
+    //cout << "\n\nFilename: "<< filename;
     int line = getLineOp(op);          //45
       //  cout << "\nline: "<< line;
     int lockVarID = getVarIDlock(op);  //416680994
         //cout << "\nvarID: "<< lockVarID;
     string lockVarName = getLockVarName(filename,line,lockVarID);
-    cout << "\nVarName: " << lockVarName;
-    
+        //cout << "\nVarName: " << lockVarName;
     storePair(lockVarID,lockVarName);
     
     string aux = getVarName(lockVarID);
-    cout << "\nMap varName:" << aux << "\n";
-
+    cout << "\nMap " << aux;
 }
 
 
@@ -669,8 +668,13 @@ string makeInstrFriendly(string instruction){
     string friendlyInstr = instruction;
     
     if(string::npos != filenameP && string::npos != lineP){
+
+        //int fileLength = lineP - filenameP - 1 ;
+        //string filename = instruction.substr(filenameP+1,fileLength);
+        //const char *cstr = instruction.substr(lineP+1,1000).c_str();
         
         string filename = getFilenameOp(friendlyInstr);
+        //int line = (int)atoi(cstr);
         int line = getLineOp(friendlyInstr);
         if (string::npos != isOSlock || string::npos != isOSunlock) {
             //friendlyInstr = friendlyInstr.substr(0,filenameP);

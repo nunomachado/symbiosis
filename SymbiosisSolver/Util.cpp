@@ -22,6 +22,54 @@
 
 using namespace std;
 
+
+//add 3x(thread_ID) to a better PP
+string util::threadTabsPP(string tid, int tab){
+    string str = "";
+    for(int j = 0; j < tab ; j++) //print the number of tabs
+    {
+        str = str+"\t\t\t";
+    }
+    return str;
+}
+
+
+//fill ScheduleOrd
+bool util::fillScheduleOrd(string tid, map<string,vector<Operation*>> *op_list){
+    bool success = false;
+
+    Operation operation = (*(((*op_list).find(tid)->second)[0]));
+    //cout << "String key: " << (t2op.find(tid)->first)<< "\nSize: " << (t2op.find(tid)->second).size() << " \n" ;
+    //cout << "Operation: "  << operation.getConstraintName() << "\n";
+    
+    vector<Operation*>::iterator it_erase;
+    it_erase = (*op_list).find(tid)->second.begin();
+    
+    failScheduleOrd.push_back(operation);
+    (*op_list).find(tid)->second.erase(it_erase);
+    //cout << "\nHEAD 1" <<(*(((*op_list).find(tid)->second)[0])).getConstraintName() <<"\n" ;
+    
+    success = true;// mudar isto!
+    return success;
+}
+
+
+//returne ThreadID from a string
+int util::getTid(std::string op){
+    
+    int posBegin = (int)op.find_first_of("-", op.find_first_of("-") + 1)+1;
+    while(op.at(posBegin) == '>'){
+        posBegin = (int)op.find_first_of("-", posBegin) + 1;
+    }
+    //for read operations, we have to consider the readId as well
+    int posEnd = (int)op.find_first_of("-", posBegin);
+    int posEnd2 = (int)op.find_first_of("&", posBegin);
+    if(posEnd != string::npos)
+        return intValueOf(op.substr(posBegin, posEnd-posBegin));
+    return intValueOf( op.substr(posBegin, posEnd2-posBegin));
+    
+}
+
 //transforms an int into a string
 string util::stringValueOf(int i)
 {

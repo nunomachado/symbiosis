@@ -6,8 +6,11 @@
 //  Copyright (c) 2013 Nuno Machado. All rights reserved.
 //
 
-#ifndef snorlaxsolver_Operations_h
-#define snorlaxsolver_Operations_h
+//#ifndef snorlaxsolver_Operations_h
+//#define snorlaxsolver_Operations_h
+
+#ifndef __symbiosisSolver__Operations__
+#define __symbiosisSolver__Operations__
 
 #include <string>
 

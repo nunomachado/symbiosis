@@ -6,14 +6,21 @@
 //  Copyright (c) 2014 Nuno Machado. All rights reserved.
 //
 
-#ifndef snorlaxsolver_Util_h
-#define snorlaxsolver_Util_h
+
+#ifndef __symbiosisSolver__Util__
+#define __symbiosisSolver__Util__
 
 #include <string>
 #include <sys/types.h>
+#include "Parameters.h"
+#include "Operations.h"
 
 namespace util{
     
+    
+    std::string threadTabsPP(std::string tid, int tab);               //add 3x(thread_ID) to a better PP
+    bool fillScheduleOrd(std::string tid, std::map< std::string, std::vector<Operation*>> *op_list );
+    int getTid(std::string op);                    //return ID from a operation;
     std::string stringValueOf(int i);                           //transforms an int into a string
     int intValueOf(std::string i);                           //transforms a string into an int
     pid_t popen2(const char *command, int *infp, int *outfp);   //similar to popen, but allows for bidirectional communication

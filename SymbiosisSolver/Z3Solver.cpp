@@ -93,6 +93,9 @@ string Z3Solver::readLinePipe()
     return ret;
 }
 
+
+
+
 /*
  *  Parses the solver output. If the model is satisfiable, return true and write the solution to file.
  *  Otherwise, return false and store the unsat core in a variable.
@@ -230,15 +233,14 @@ bool Z3Solver::checkSat()
         
         //print operations in order
         int labelsol = 0; //label counter (we can't use i, because some positions in globalOrder array may be empty)
+        
+        //fill failScheduleOrd with the ordered Operation
+        failScheduleOrd.reserve(globalOrder.size());
+        map<string,vector<Operation*> > t2op = operationsByThread;
+
         for(int i = 0; i < globalOrder.size(); i++)
         {
-            int posBegin = 0;
-            int posEnd = 0;
-            
             string op = globalOrder[i];
-            //APAGARf
-            //cout << "\nOP Golbal Order : " << op <<"\n"  ;
-            
             
             //add solution constraint to file
             if(i < globalOrder.size()-1
@@ -249,31 +251,26 @@ bool Z3Solver::checkSat()
                 labelsol++;
             }
             
-            if(op.empty())
-                continue;
+            int id = util::getTid(op);
+            string tid = util::stringValueOf(id);
             
-            posBegin = (int)op.find_first_of("-", op.find_first_of("-") + 1)+1;
-            while(op.at(posBegin) == '>'){
-                posBegin = (int)op.find_first_of("-", posBegin) + 1;
-            }
-            
-            //for read operations, we have to consider the readId as well
-            posEnd = (int)op.find_last_of("-");
-            if(posEnd <= posBegin)
-                posEnd = (int)op.find_first_of("@");
-            
-            string tid = op.substr(posBegin, posEnd - posBegin);
-            
-            for(int j = 0; j < tabCounters[tid]; j++) //print the number of tabs
             {
-                cout << "\t\t\t";
+            //fill failScheduleOrd
+            bool successFill = util::fillScheduleOrd(tid, &t2op);
+            if (!successFill)
+                cout << "ERRROR SAVING FailingSchedule!\n";
             }
-            cout << "[" << i << "] " << op << "\n";
+            
+            string tabN = util::threadTabsPP(tid, tabCounters[tid]);
+            cout << tabN;
+            cout << "[" << i << "] " << op << "\n" ;
         }
+        cout << ">> FailScheduleOrd populated!\n";
         solFile.close();
     }
     return isSat;
 }
+
 
 
 bool Z3Solver::solve()
