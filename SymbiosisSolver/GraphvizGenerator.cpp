@@ -718,9 +718,10 @@ string graphgen::getCodeLine(int line, string filename)
 {
     numOps = 0;
     
-    string dir ="cd /Users/drk/Desktop/symbiosisProj/Tests/simpleAssert";
+    string opendir = "cd "+ sourceFilePath;
+    //string opendir = "cd /Users/drk/Desktop/symbiosisProj/Tests/simpleAssert";
     string line2code = "nl -ba "+ filename+" | grep  \"  "+ util::stringValueOf(line) +  "\\t\"";
-    string sysExeGetCodeLine = (dir+"; "+line2code);
+    string sysExeGetCodeLine = (opendir+"; "+line2code);
     char *command = (char *)sysExeGetCodeLine.c_str();
     
     lineCode_pid = util::popen2(command, &procW, &procR);

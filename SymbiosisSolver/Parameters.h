@@ -24,6 +24,7 @@
     extern std::string solverPath;      //path to the solver executable
     extern std::string formulaFile;     //path to the output file of the generated constraint formula
     extern std::string solutionFile;    //path to the output file of the solution
+    extern std::string sourceFilePath;  //path to the source code
     extern std::string assertThread;    //id of the thread that contains the assertion
     extern bool failedExec;             //indicates whether the traces correspond to a failing or successful execution
 

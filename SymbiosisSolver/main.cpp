@@ -70,6 +70,7 @@ void parse_args(int argc, char *const* argv)
             {"with-solver", required_argument, 0, 's'},
             {"model", required_argument, 0, 'm'},
             {"solution", required_argument, 0, 'l'},
+            {"source", required_argument, 0, 'i'},
             {"debug", no_argument, 0, 'd'},
             {"fix-mode", no_argument, 0, 'f'},
            
@@ -97,6 +98,9 @@ void parse_args(int argc, char *const* argv)
                 
             case 'c':
                 symbFolderPath = optarg;
+                break;
+            case 'i':
+                sourceFilePath = optarg;
                 break;
                 
             case 's':

@@ -19,6 +19,7 @@ std::string solverPath = "";
 std::string formulaFile = "";
 std::string solutionFile = "";
 std::string assertThread = "";
+std::string sourceFilePath = "";
 bool failedExec = false;
 
 std::vector<Operation> failScheduleOrd;
