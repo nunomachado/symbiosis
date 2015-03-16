@@ -1010,9 +1010,6 @@ void generateConstraintModel()
         {
             string tid = keys[i];
             parse_constraints(symTracesByThread[tid][traceCounterByThread[i]]);
-            
-            //APAGAR
-            //cout << "\n\n#\n " << tid << "\n#\n";
         }
         
         //debug: print constraints
@@ -1526,13 +1523,16 @@ int main(int argc, char *const* argv)
         //parse_avisoTrace();
         generateConstraintModel();
         
-        /*
-        cout << failScheduleOrd.size()<< " size \n";
-        for(vector<Operation> ::iterator it = failScheduleOrd.begin(); it != failScheduleOrd.end(); ++it) {
-            cout << it->getLine() << "\n";
-        }
-        */
         
+        for(vector<Operation> ::iterator it = failScheduleOrd.begin(); it != failScheduleOrd.end(); ++it) {
+            //it->print();
+            RWOperation* tmprw = dynamic_cast<RWOperation*>(&(*it));
+            if(tmprw!=0)
+            {
+                cout << "IS RW!\n";
+            }
+            //cout << it->getOrderConstraintName() << ", File: "<< it->getFilename() << "\n";
+        }
 
     }
     

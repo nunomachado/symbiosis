@@ -37,16 +37,33 @@ string util::threadTabsPP(string tid, int tab){
 //fill ScheduleOrd
 bool util::fillScheduleOrd(string tid, map<string,vector<Operation*>> *op_list){
     bool success = false;
-
-    Operation operation = (*(((*op_list).find(tid)->second)[0]));
-    //cout << "String key: " << (t2op.find(tid)->first)<< "\nSize: " << (t2op.find(tid)->second).size() << " \n" ;
-    //cout << "Operation: "  << operation.getConstraintName() << "\n";
     
+    //TAG=AQUI!!
+    //@DIEGUES passar o vector(*operation). Se nao mudar o vector(operation) apenas grava as classes operation
+    /*
+     RWOperation* tmprw = dynamic_cast<RWOperation*>((*op_list)[tid][0]);
+    if(tmprw!=0)
+    {
+        cout << "IS RW!\n";
+        //failScheduleOrd.push_back(*tmprw);
+    }
+    */
+    
+    //get the head
+    failScheduleOrd.push_back(*(*op_list)[tid][0]);
+    
+    /*
+    RWOperation* tmprw2 = dynamic_cast<RWOperation*>(&(failScheduleOrd[failScheduleOrd.size()-1]));
+    if(tmprw2!=0)
+    {
+        cout << "CERTO!\n";
+    }
+    */
+    
+    //remove the head
     vector<Operation*>::iterator it_erase;
-    it_erase = (*op_list).find(tid)->second.begin();
-    
-    failScheduleOrd.push_back(operation);
-    (*op_list).find(tid)->second.erase(it_erase);
+    it_erase = (*op_list)[tid].begin();
+    (*op_list)[tid].erase(it_erase);
     //cout << "\nHEAD 1" <<(*(((*op_list).find(tid)->second)[0])).getConstraintName() <<"\n" ;
     
     success = true;// mudar isto!

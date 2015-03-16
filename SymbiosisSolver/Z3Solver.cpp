@@ -256,9 +256,11 @@ bool Z3Solver::checkSat()
             
             {
             //fill failScheduleOrd
+            /*
             bool successFill = util::fillScheduleOrd(tid, &t2op);
             if (!successFill)
                 cout << "ERRROR SAVING FailingSchedule!\n";
+            */
             }
             
             string tabN = util::threadTabsPP(tid, tabCounters[tid]);

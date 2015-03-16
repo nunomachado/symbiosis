@@ -95,30 +95,54 @@ string getAltDependencePort(string op)
 }
 
 
+
 /*
- * Removes from the operation name the characters unsupported by graphviz
+ * Replaces CHAR "specialChar" (unsupported by graphviz) to "htmlCode"
+ *
+ * Example:
+ *            ">" to "&gt"
+ *            "&" to "&amp"
  */
-string cleanOperation(string op)
+string changeChar2graphviz(string specialChar, string htmlCode ,string op){
+    
+    size_t pos = op.find(specialChar);
+    while(pos != string::npos)
+    {
+        op.replace(pos,1,htmlCode);
+        pos++;
+        pos = op.find(specialChar,pos);
+    }
+    return op;
+};
+
+
+/*
+ *Remove line comments
+ */
+string removeComment(string op)
 {
-    size_t pos = op.find(">");
-    size_t pos2 = op.find("&");
-    
-    if(pos != string::npos)
-    {
-        op = op.erase(pos,1);
-    }
-    
-    if(pos2 != string::npos)
-    {
-        op.erase( std::remove( op.begin(), op.end(),'&'), op.end() ) ;
-        //op.erase(std::remove_if(op.begin(), op.end(), std::not1(std::ptr_fun(isalnum))), line.end());
-    }
-    
+    size_t pos = op.find("//");
+    if(pos!= string::npos)
+        op.resize(pos);
     return op;
 }
 
 
-//expecting something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45 to get "SimpleAssertKLEE.c"
+
+/*
+ * Changes from the operation name the characters unsupported by graphviz
+ */
+string cleanOperation(string op)
+{
+    op = removeComment(op);
+    op = changeChar2graphviz(">","&gt;",op);
+    op = changeChar2graphviz("<","&lt;",op);
+    op = changeChar2graphviz("&","&amp;",op);
+    return op;
+}
+
+
+//Retrive "SimpleAssertKLEE.c" from "[18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45"
 string  getFilenameOp(string op)
 {
     int filenameInitP = (int)op.find("&")+1;
@@ -173,7 +197,7 @@ string getLockVarName(string filename, int line, int lockVarID)
 
 void storePair(int lockVarID,string lockVarName){
 
-    lockVarName.erase( std::remove( lockVarName.begin(), lockVarName.end(),'&'), lockVarName.end() );
+    //lockVarName.erase( std::remove( lockVarName.begin(), lockVarName.end(),'&'), lockVarName.end() );
     lockVariables.insert(pair<int,string>(lockVarID,lockVarName));
 //    map<int,string> lockVariables; //map: lockID -> lockVariable
 }
@@ -668,21 +692,13 @@ string makeInstrFriendly(string instruction){
     string friendlyInstr = instruction;
     
     if(string::npos != filenameP && string::npos != lineP){
-
-        //int fileLength = lineP - filenameP - 1 ;
-        //string filename = instruction.substr(filenameP+1,fileLength);
-        //const char *cstr = instruction.substr(lineP+1,1000).c_str();
         
         string filename = getFilenameOp(friendlyInstr);
-        //int line = (int)atoi(cstr);
         int line = getLineOp(friendlyInstr);
+        
         if (string::npos != isOSlock || string::npos != isOSunlock) {
-            //friendlyInstr = friendlyInstr.substr(0,filenameP);
             
-            //string varID = friendlyInstr.substr(friendlyInstr.find("_")+1,friendlyInstr.length());
-            //varID = varID.substr(0,varID.find("-"));
             int varID = getVarIDlock(friendlyInstr);
-            //string lockVarName = getVarName((int)atoi(varID.c_str()));
             string lockVarName = getVarName(varID);
             string lockStr = " lock(";
             if (string::npos != isOSunlock) {
