@@ -23,6 +23,7 @@
 #include "Types.h"
 #include "Parameters.h"
 #include "GraphvizGenerator.h"
+#include "Schedule.h"
 
 using namespace std;
 
@@ -555,8 +556,8 @@ void parse_constraints(string symbFilePath)
                         }
                         
                         //as the wait operations release and acquire locks internally, we also have to account for that behavior
-                        vector<Operation*> tmpvec = operationsByThread[threadId];
-                        for(vector<Operation*>::reverse_iterator in = tmpvec.rbegin(); in!=tmpvec.rend(); ++in)
+                        Schedule tmpvec = operationsByThread[threadId];
+                        for(Schedule::reverse_iterator in = tmpvec.rbegin(); in!=tmpvec.rend(); ++in)
                         {
                             SyncOperation* lop = dynamic_cast<SyncOperation*>(*in);
                             if(lop!=0 && lop->getType() == "lock")
@@ -735,7 +736,7 @@ void parse_constraints(string symbFilePath)
     //add non-closed locking pairs to lockpairset
     while(numIncLockPairs > 0)
     {
-        for(vector<Operation*>::reverse_iterator rit = operationsByThread[threadId].rbegin();
+        for(Schedule::reverse_iterator rit = operationsByThread[threadId].rbegin();
             rit != operationsByThread[threadId].rend() && numIncLockPairs > 0; ++rit)
         {
             SyncOperation* tmplop = dynamic_cast<SyncOperation*>(*rit);
@@ -884,6 +885,19 @@ bool verifyConstraintModel(ConstModelGen *cmgen)
      //*/
     cout << "\n### SOLVING CONSTRAINT MODEL: Z3\n";
     success = cmgen->solve();
+    
+    
+    cout<< "\n\nOLD SCH" << "\n\n";
+    scheduleLIB::printSch(failScheduleOrd);
+    
+    Schedule simpleSch = scheduleLIB::scheduleSimplify(failScheduleOrd,cmgen);
+    
+    
+    
+    cout<< "\n\nNEW SCH" << "\n\n";
+    scheduleLIB::printSch(simpleSch);
+    
+    
     
     //** clean data structures
     cmgen->resetSolver();
@@ -1102,11 +1116,11 @@ void generateConstraintModel()
                 it->print();
             
             cout<< "\n### OPERATIONS BY THREAD\n";
-            for (map<string, vector<Operation*> >::iterator it=operationsByThread.begin(); it!=operationsByThread.end(); ++it)
+            for (map<string, Schedule >::iterator it=operationsByThread.begin(); it!=operationsByThread.end(); ++it)
             {
                 cout << "-- Thread " << it->first <<"\n";
-                vector<Operation*> tmpvec = it->second;
-                for(vector<Operation*>::iterator in = tmpvec.begin(); in!=tmpvec.end(); ++in)
+                Schedule tmpvec = it->second;
+                for(Schedule::iterator in = tmpvec.begin(); in!=tmpvec.end(); ++in)
                 {
                     (*in)->print();
                 }
@@ -1515,6 +1529,8 @@ void findBugRootCause()
     
 }
 
+
+
 int main(int argc, char *const* argv)
 {
     parse_args(argc, argv);
@@ -1526,18 +1542,6 @@ int main(int argc, char *const* argv)
     {
         //parse_avisoTrace();
         generateConstraintModel();
-        
-        
-        for(vector<Operation> ::iterator it = failScheduleOrd.begin(); it != failScheduleOrd.end(); ++it) {
-            //it->print();
-            RWOperation* tmprw = dynamic_cast<RWOperation*>(&(*it));
-            if(tmprw!=0)
-            {
-                cout << "IS RW!\n";
-            }
-            //cout << it->getOrderConstraintName() << ", File: "<< it->getFilename() << "\n";
-        }
-
     }
     
     return 0;

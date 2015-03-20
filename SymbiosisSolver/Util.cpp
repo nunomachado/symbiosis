@@ -24,7 +24,7 @@ using namespace std;
 
 
 //add 3x(thread_ID) to a better PP
-string util::threadTabsPP(string tid, int tab){
+string util::threadTabsPP(int tab){
     string str = "";
     for(int j = 0; j < tab ; j++) //print the number of tabs
     {
@@ -35,39 +35,15 @@ string util::threadTabsPP(string tid, int tab){
 
 
 //fill ScheduleOrd
-bool util::fillScheduleOrd(string tid, map<string,vector<Operation*>> *op_list){
-    bool success = false;
-    
-    //TAG=AQUI!!
-    //@DIEGUES passar o vector(*operation). Se nao mudar o vector(operation) apenas grava as classes operation
-    /*
-     RWOperation* tmprw = dynamic_cast<RWOperation*>((*op_list)[tid][0]);
-    if(tmprw!=0)
-    {
-        cout << "IS RW!\n";
-        //failScheduleOrd.push_back(*tmprw);
-    }
-    */
+void util::fillScheduleOrd(string tid, map<string,vector<Operation*>>* op_list){
     
     //get the head
-    failScheduleOrd.push_back(*(*op_list)[tid][0]);
-    
-    /*
-    RWOperation* tmprw2 = dynamic_cast<RWOperation*>(&(failScheduleOrd[failScheduleOrd.size()-1]));
-    if(tmprw2!=0)
-    {
-        cout << "CERTO!\n";
-    }
-    */
+    failScheduleOrd.push_back(&(*(*op_list)[tid][0]));
     
     //remove the head
-    vector<Operation*>::iterator it_erase;
-    it_erase = (*op_list)[tid].begin();
+    vector<Operation*>::iterator it_erase = (*op_list)[tid].begin();
     (*op_list)[tid].erase(it_erase);
-    //cout << "\nHEAD 1" <<(*(((*op_list).find(tid)->second)[0])).getConstraintName() <<"\n" ;
     
-    success = true;// mudar isto!
-    return success;
 }
 
 

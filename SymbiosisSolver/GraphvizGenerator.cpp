@@ -135,9 +135,9 @@ string removeComment(string op)
 string cleanOperation(string op)
 {
     op = removeComment(op);
+    op = changeChar2graphviz("&","&amp;",op);
     op = changeChar2graphviz(">","&gt;",op);
     op = changeChar2graphviz("<","&lt;",op);
-    op = changeChar2graphviz("&","&amp;",op);
     return op;
 }
 

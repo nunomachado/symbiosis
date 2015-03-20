@@ -22,7 +22,7 @@ std::string assertThread = "";
 std::string sourceFilePath = "";
 bool failedExec = false;
 
-std::vector<Operation> failScheduleOrd;
+std::vector<Operation*> failScheduleOrd;
 std::map<std::string, std::vector<Operation*> > operationsByThread;    //map thread id -> vector with thread's operations
 
 

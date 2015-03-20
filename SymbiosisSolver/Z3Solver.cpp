@@ -235,6 +235,7 @@ bool Z3Solver::checkSat()
         int labelsol = 0; //label counter (we can't use i, because some positions in globalOrder array may be empty)
         
         //fill failScheduleOrd with the ordered Operation
+        failScheduleOrd.clear();
         failScheduleOrd.reserve(globalOrder.size());
         map<string,vector<Operation*> > t2op = operationsByThread;
 
@@ -254,16 +255,11 @@ bool Z3Solver::checkSat()
             int id = util::getTid(op);
             string tid = util::stringValueOf(id);
             
-            {
-            //fill failScheduleOrd
-            /*
-            bool successFill = util::fillScheduleOrd(tid, &t2op);
-            if (!successFill)
-                cout << "ERRROR SAVING FailingSchedule!\n";
-            */
-            }
             
-            string tabN = util::threadTabsPP(tid, tabCounters[tid]);
+            //fill failScheduleOrd
+            util::fillScheduleOrd(tid, &t2op);
+            
+            string tabN = util::threadTabsPP(tabCounters[tid]);
             cout << tabN;
             cout << "[" << i << "] " << op << "\n" ;
         }

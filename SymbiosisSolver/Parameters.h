@@ -14,6 +14,8 @@
 #include <map>
 #include "Operations.h"
 
+typedef std::vector<Operation*> Schedule;
+
     //program inputs
     extern const int MAX_LINE_SIZE;
     extern bool debug;                  //prints debug info
@@ -31,7 +33,7 @@
     //global vars
     //Change this to parameters.h
     extern std::map<std::string, std::vector<Operation*> > operationsByThread;    //map thread id -> vector with thread's operations
-    extern std::vector<Operation> failScheduleOrd; // vector to store the fail schedules operations in order
+    extern std::vector<Operation*> failScheduleOrd; // vector to store the fail schedules operations in order
 
     extern std::vector<int> unsatCore;  //vector to store the core (i.e. the constraints) of an unsat model (this is only used in the bug-fixing mode, to store which events of the failing schedule cause the non-bug condition to be unsat)
     //std::map<std::string, std::vector<Operation*> > operationsByThread;    //map thread id -> vector with thread's operations
