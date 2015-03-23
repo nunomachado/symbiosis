@@ -17,15 +17,33 @@ using namespace std;
 //Print Schedule using OrderConstraintName
 void scheduleLIB::printSch (Schedule sch){
     int i = 0 ;
-    cout << "Schedule size: " << sch.size()<< "\n";
+    cout << "Schedule size: " << sch.size()<< endl;
+    cout << "Schedule contextSwitches: " << getContextSwitchNum(sch)<< endl;
     for(Schedule ::iterator it = sch.begin(); it != sch.end(); ++it) {
         int strID = util::intValueOf((*it)->getThreadId());
         string tabs = util::threadTabsPP(strID);
         
         cout << tabs <<"["<< i <<"] ";//<<  (*it)->getThreadId();
-        cout << (*it)->getOrderConstraintName() << " \n";
+        cout << (*it)->getOrderConstraintName() << endl;
         i++;
     }
+}
+
+
+//return the number of context switches
+int scheduleLIB::getContextSwitchNum(Schedule sch){
+    int count = 0;
+    string oldTid = sch[0]->getThreadId();
+    for(Schedule::iterator it = sch.begin(); it != sch.end()-1; it++)
+    {
+        string nextTid = (*(it+1))->getThreadId();
+        if (nextTid != oldTid)
+        {
+            count++;
+        }
+        oldTid = nextTid;
+    }
+    return count;
 }
 
 
@@ -143,13 +161,15 @@ vector<string> scheduleLIB::getSolutionStr(Schedule schedule){
 }
 
 
-Schedule scheduleLIB::moveUpTEI(Schedule schedule,ConstModelGen *cmgen)
+Schedule scheduleLIB::moveUpTEI(Schedule schedule,ConstModelGen *cmgen, bool isReverse)
 {
     int i=0;
     int prox = -1; // < 0 false ; >= 0 represents the action posion
     
     Schedule currentSch = schedule;
     Schedule oldSch = currentSch;
+    Schedule reverseSch;
+    bool valid;
     
     for(Schedule::iterator it = schedule.begin(); it != schedule.end();it++)
     {
@@ -159,12 +179,18 @@ Schedule scheduleLIB::moveUpTEI(Schedule schedule,ConstModelGen *cmgen)
             if(prox != -1)
             {
                 currentSch = moveTEISch(currentSch,i,prox);
-                //cout << (currentSch[0])->getOrderConstraintName();
-                bool valid = cmgen->solveWithSolution(getSolutionStr(currentSch), false);
+                if(isReverse)
+                {
+                    reverseSch = currentSch;
+                    reverse(reverseSch.begin(),reverseSch.end());
+                    valid = cmgen->solveWithSolution(getSolutionStr(reverseSch), false);
+                }
+                else
+                    valid = cmgen->solveWithSolution(getSolutionStr(currentSch), false);
                 if (valid)
                 {
                     oldSch = currentSch; // save the new solution in oldSch
-                    cout << "\n\nNEW VALID :D\n\n";
+                    //cout << "\n\nNEW VALID :D\n\n";
                     //printSch(oldSch);
                 }
                 else
@@ -180,38 +206,42 @@ Schedule scheduleLIB::moveUpTEI(Schedule schedule,ConstModelGen *cmgen)
 Schedule scheduleLIB::moveDownTEI(Schedule schedule, ConstModelGen *cmgen)
 {
     reverse(schedule.begin(),schedule.end());
-    cout << "\n\nFirst reverse \n\n";
-    scheduleLIB::printSch(schedule);
     
-    Schedule sch = moveUpTEI(schedule, cmgen);
-    cout << "\n\nmoveUP \n\n";
-    scheduleLIB::printSch(sch);
+    Schedule sch = moveUpTEI(schedule, cmgen, true);
     
     reverse(sch.begin(),sch.end());
-    cout << "\n\nSecond reverse \n\n";
-    scheduleLIB::printSch(sch);
+    
     return sch;
 }
 
 
 Schedule scheduleLIB::scheduleSimplify(Schedule schedule, ConstModelGen *cmgen)
 {
-    Schedule currentSch;// = schedule;
-    //Schedule oldSch = schedule;
-    /*
-     while costTold < cost Tcurrent{
-     //removeLastTEI
-     //move-Up-TEI
-     current = moveUpTEI(currentSch);
-     //moveDownTEI
-     
-     
-     }
-     
-     
-     */
-    currentSch = scheduleLIB::moveUpTEI(schedule, cmgen);
-    currentSch = scheduleLIB::moveDownTEI(currentSch, cmgen);
-    
-    return currentSch;
+    Schedule currentSch = schedule;
+    Schedule oldSch = schedule;
+    bool continueS = true ;
+    int count = 0;
+    while(continueS)
+    {
+        //removeLastTEI
+        //NOT IMPLEMENTED
+        
+        //move-Up-TEI
+        bool notReverse = false;
+        currentSch = scheduleLIB::moveUpTEI(currentSch, cmgen, notReverse);
+        
+        //move-Down-TEI
+        currentSch = scheduleLIB::moveDownTEI(currentSch, cmgen);
+        
+        if(getContextSwitchNum(currentSch) < getContextSwitchNum(oldSch))
+        {
+            oldSch = currentSch;    //simplification continues
+            count++;
+            cout << count << " simplifications" << endl;
+        }
+        else
+            continueS = false; //no effect simplification, exit cycle.
+        
+    }
+    return oldSch;
 }
