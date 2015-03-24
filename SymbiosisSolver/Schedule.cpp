@@ -117,7 +117,7 @@ Schedule scheduleLIB::moveTEISch(Schedule list,int newPositon, int oldPosition)
 bool scheduleLIB::isLastActionTEI(Schedule sch, int pos)
 {
     string Tid = getTidOperation(*sch[pos]);
-    //cout << (*sch[pos]).getConstraintName() << "\n";
+    //cout << (*sch[pos]).getConstraintName() << endl;
     if(pos < sch.size()-1)
     {
         string nextTid = getTidOperation(*sch[pos+1]);
@@ -152,7 +152,7 @@ vector<string> scheduleLIB::getSolutionStr(Schedule schedule){
     cout << size << "\n" ;
     for(Schedule::iterator it = schedule.begin(); it != schedule.end(); it++)
     {
-        //cout << i << " Solution: " << (*it)->getOrderConstraintName() <<"\n";
+        //cout << i << " Solution: " << (*it)->getOrderConstraintName() << endl;
         actionsList.push_back((*it)->getOrderConstraintName());
         i++;
         
@@ -187,14 +187,11 @@ Schedule scheduleLIB::moveUpTEI(Schedule schedule,ConstModelGen *cmgen, bool isR
                 }
                 else
                     valid = cmgen->solveWithSolution(getSolutionStr(currentSch), false);
+                
                 if (valid)
-                {
                     oldSch = currentSch; // save the new solution in oldSch
-                    //cout << "\n\nNEW VALID :D\n\n";
-                    //printSch(oldSch);
-                }
                 else
-                    currentSch = oldSch; // return to last valid solution
+                    currentSch = oldSch; // return to the last valid solution
             }
         }
         i++;

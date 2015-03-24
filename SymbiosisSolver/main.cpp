@@ -160,13 +160,13 @@ void parse_args(int argc, char *const* argv)
     else
         cout << "# MODE: FIND BUG-TRIGGERING SCHEDULE\n";
     
-     if(!avisoFilePath.empty()) cout << "# AVISO TRACE: " << avisoFilePath << "\n";
-     if(!symbFolderPath.empty()) cout << "# SYMBOLIC TRACES: " << symbFolderPath << "\n";
-     cout << "# SOLVER: " << solverPath << "\n";
-     cout << "# CONSTRAINT MODEL: " << formulaFile << "\n";
-     cout << "# SOLUTION: " << solutionFile << "\n";
+     if(!avisoFilePath.empty()) cout << "# AVISO TRACE: " << avisoFilePath << endl;
+     if(!symbFolderPath.empty()) cout << "# SYMBOLIC TRACES: " << symbFolderPath << endl;
+     cout << "# SOLVER: " << solverPath << endl;
+     cout << "# CONSTRAINT MODEL: " << formulaFile << endl;
+     cout << "# SOLUTION: " << solutionFile << endl;
     
-    cout << "\n";
+    cout << endl;
 }
 
 /**
@@ -199,7 +199,7 @@ void parse_constraints(string symbFilePath)
         exit(0);
     }
     
-    std::cout << ">> Parsing " << util::extractFileBasename(symbFilePath) << "\n";
+    std::cout << ">> Parsing " << util::extractFileBasename(symbFilePath) << endl;
     
     // read each line of the file
     while (!fin.eof())
@@ -278,7 +278,7 @@ void parse_constraints(string symbFilePath)
                 }
                 else
                 {
-                    cout << tmp << "\n";
+                    cout << tmp << endl;
                     tmp.erase(0,1); //erase first '$'
                     string value = "";
                     while(tmp.back() != '$')
@@ -828,7 +828,7 @@ void parse_avisoTrace()
             token = strtok (NULL," :"); //token == line of code
             aetmp.loc = atoi(token);
             
-            //cout << "TID: " << aetmp.tid << " Filename: " << aetmp.filename << " Loc: "<< aetmp.loc << "\n";
+            //cout << "TID: " << aetmp.tid << " Filename: " << aetmp.filename << " Loc: "<< aetmp.loc << endl;
             
             atrace[aetmp.tid].push_back(aetmp);
             fulltrace.push_back(aetmp);
@@ -842,9 +842,9 @@ void parse_avisoTrace()
         cout<< "\n### AVISO TRACE\n";
         
         for (unsigned i = 0; i < fulltrace.size(); i++) {
-            cout << "[" << fulltrace[i].tid << "] " << util::extractFileBasename(fulltrace[i].filename) << "@" << fulltrace[i].loc << "\n";
+            cout << "[" << fulltrace[i].tid << "] " << util::extractFileBasename(fulltrace[i].filename) << "@" << fulltrace[i].loc << endl;
         }
-        cout << "\n";
+        cout << endl;
     }
 }
 
@@ -887,14 +887,12 @@ bool verifyConstraintModel(ConstModelGen *cmgen)
     success = cmgen->solve();
     
     
-    cout<< "\n\nOLD SCH" << "\n\n";
+    cout<< "\n\nOLD SCH" << endl;
     scheduleLIB::printSch(failScheduleOrd);
     
     Schedule simpleSch = scheduleLIB::scheduleSimplify(failScheduleOrd,cmgen);
     
-    
-    
-    cout<< "\n\nNEW SCH" << "\n\n";
+    cout<< "\n\nNEW SCH" << endl;
     scheduleLIB::printSch(simpleSch);
     
     
@@ -984,7 +982,7 @@ void generateConstraintModel()
             {
                 char filename[250];
                 strcpy(filename, hFile->d_name);
-               // std::cerr << "found a symbolic trace file: " << filename << "\n";
+               // std::cerr << "found a symbolic trace file: " << filename << endl;
                 
                 //** extract the thread id to serve as key in the map
                 string tid = filename;
@@ -1021,7 +1019,7 @@ void generateConstraintModel()
     
     do
     {
-        std::cout << "\n---- ATTEMPT " << attempts << "\n";
+        std::cout << "\n---- ATTEMPT " << attempts << endl;
         
         //** pick one symbolic trace per thread
         for(int i = 0; i < keys.size(); i++)
@@ -1118,7 +1116,7 @@ void generateConstraintModel()
             cout<< "\n### OPERATIONS BY THREAD\n";
             for (map<string, Schedule >::iterator it=operationsByThread.begin(); it!=operationsByThread.end(); ++it)
             {
-                cout << "-- Thread " << it->first <<"\n";
+                cout << "-- Thread " << it->first << endl;
                 Schedule tmpvec = it->second;
                 for(Schedule::iterator in = tmpvec.begin(); in!=tmpvec.end(); ++in)
                 {
@@ -1403,7 +1401,7 @@ void findBugRootCause()
     for(int i = 0; i<unsatCore.size();i++)
     {
         string op = solution[unsatCore[i]];
-        cout << op << "\n";
+        cout << op << endl;
         mapOpToId[op] = unsatCore[i];
     }
     
@@ -1411,7 +1409,7 @@ void findBugRootCause()
     for(int i = 0; i < bugCondOps.size(); i++)
     {
         string bop = bugCondOps[i];
-        cout << bop <<"\n";
+        cout << bop << endl;
         
         //find the position of each op in the bug condition in the solution array
         for(int j = 0; j<solution.size();j++)
@@ -1440,7 +1438,7 @@ void findBugRootCause()
         vector<string> newSchedule = generateNewSchedule(invPair);
         
         cout << "\n------------------------\n";
-        cout << "["<< ++numAttempts <<"] Attempt by inverting pair:\n" << pairToString(invPair, solution) << "\n";
+        cout << "["<< ++numAttempts <<"] Attempt by inverting pair:\n" << pairToString(invPair, solution) << endl;
         
         bugCondOps.clear(); //clear bugCondOps to avoid getting repeated operations
         
@@ -1475,7 +1473,7 @@ void findBugRootCause()
                 //store operation if its a read on the same var that of the Op in the bug condition
                 if(svar == bvar && sop.find("R-")!=string::npos)
                 {
-                    cout << sop << "\n";
+                    cout << sop << endl;
                     opsToInvert.push_back(sop);
                     mapOpToId[sop] = j;
                 }
@@ -1494,7 +1492,7 @@ void findBugRootCause()
             vector<string> newSchedule = generateNewSchedule(invPair);
             
             cout << "\n------------------------\n";
-            cout << "["<< ++numAttempts <<"] Attempt by inverting pair:\n" << pairToString(invPair, solution) << "\n";
+            cout << "["<< ++numAttempts <<"] Attempt by inverting pair:\n" << pairToString(invPair, solution) << endl;
             
             bugCondOps.clear(); //clear bugCondOps to avoid getting repeated operations
             
@@ -1524,7 +1522,7 @@ void findBugRootCause()
         cout << "\n#Events in the unsat core: " << unsatCore.size();
         cout << "\n#Events in the diff-debug schedule: " << numEventsDifDebug;
         cout << "\n#Data-dependencies in the full failing schedule: " << numDepFull;
-        cout << "\n#Data-dependencies in the diff-debug schedule: " << numDepDifDebug << "\n";
+        cout << "\n#Data-dependencies in the diff-debug schedule: " << numDepDifDebug << endl;
     }
     
 }

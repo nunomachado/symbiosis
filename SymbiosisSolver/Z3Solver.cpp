@@ -35,7 +35,7 @@ Z3Solver::Z3Solver()
     z3pid = util::popen2(command, &procW, &procR);
     
     cout << "[Solver] Init solver...\n";
-    cout << "[Solver] create Z3 pid " << z3pid << "\n";
+    cout << "[Solver] create Z3 pid " << z3pid << endl;
     if (!z3pid)
     {
         perror("Problems with pipe");
@@ -48,7 +48,7 @@ void Z3Solver::openOutputFile()
 {
     //open file in output mode and deleting previous content
     z3File.open(formulaFile, ios::trunc);
-    cout << "Opening file: " << formulaFile << "\n";
+    cout << "Opening file: " << formulaFile << endl;
     if(!z3File.is_open())
     {
         cerr << " -> Error opening file "<< formulaFile <<".\n";
@@ -65,7 +65,7 @@ void Z3Solver::openInputFile()
 {
     //open file in input mode and deleting previous content
     z3File.open(formulaFile, ios::trunc);
-    cout << "Opening file: " << formulaFile << "\n";
+    cout << "Opening file: " << formulaFile << endl;
     if(!z3File.is_open())
     {
         cerr << " -> Error opening file "<< formulaFile <<".\n";
@@ -114,10 +114,10 @@ bool Z3Solver::checkSat()
     {
         //cout << line;
         if(!line.compare("unsat")) {
-            cout << "[Solver] Model Satisfiability: "<< line << "\n";
+            cout << "[Solver] Model Satisfiability: "<< line << endl;
         }
         if(!line.compare("sat")) {
-            cout << "[Solver] Model Satisfiability: "<< line << "\n";
+            cout << "[Solver] Model Satisfiability: "<< line << endl;
             isSat = true;
             endTime = time(NULL);
         }
@@ -154,7 +154,7 @@ bool Z3Solver::checkSat()
         }
         else if(line.find("error")!=std::string::npos) //something wrong happened
         {
-            cout << "[Solver] " << line << "\n";
+            cout << "[Solver] " << line << endl;
         }
         else if(line.find("PC") !=std::string::npos
                 || line.find("RWC")!=std::string::npos
@@ -162,7 +162,7 @@ bool Z3Solver::checkSat()
                 || line.find("solution")!=std::string::npos
                 || line.find("LC")!=std::string::npos) //get unsat core
         {
-            cout << "[Solver] Unsat Core: " << line << "\n";
+            cout << "[Solver] Unsat Core: " << line << endl;
             
             //save the unsat core if in bug-fixing mode
             if(bugFixMode)
@@ -199,7 +199,7 @@ bool Z3Solver::checkSat()
         }
         
         solFile.open(solutionFile, ios::trunc);
-        cout << "Saving solution to file: " << solutionFile << "\n";
+        cout << "Saving solution to file: " << solutionFile << endl;
         if(!solFile.is_open())
         {
             cerr << " -> Error opening file "<< formulaFile <<".\n";
@@ -261,7 +261,7 @@ bool Z3Solver::checkSat()
             
             string tabN = util::threadTabsPP(tabCounters[tid]);
             cout << tabN;
-            cout << "[" << i << "] " << op << "\n" ;
+            cout << "[" << i << "] " << op << endl;
         }
         cout << ">> FailScheduleOrd populated!\n";
         solFile.close();
@@ -363,7 +363,7 @@ void Z3Solver::closeZ3()
     writeLineZ3("(exit)");
     close(procR);
     close(procW);
-    cerr << ">> Killing Z3 pid "<< z3pid <<" and "<< (z3pid+1) << "\n";
+    cerr << ">> Killing Z3 pid "<< z3pid <<" and "<< (z3pid+1) << endl;
     kill(z3pid,SIGKILL);
     kill(z3pid+1,SIGKILL);//** Nuno: apparently, the process created has always PID=z3pid+1, so we must increment the pid in order to kill it properly
 }
@@ -379,7 +379,7 @@ void Z3Solver::reset()
 
 void Z3Solver::writeLineZ3(string content)
 {
-    content = content +"\n";
+    content = content + "\n";
     //write(procW,content.c_str(),content.length());
     z3File << content;
 }

@@ -73,7 +73,7 @@ void Operation::setFilename(string f){
 
 void Operation::print()
 {
-    cout << "[" << threadId << "] Op-" << var << "-" << id << "&" << filename << "@" << line << "\n";
+    cout << "[" << threadId << "] Op-" << var << "-" << id << "&" << filename << "@" << line << endl;
 }
 
 string Operation::getOrderConstraintName()
@@ -152,7 +152,7 @@ string RWOperation::getInitialValueName()
 bool RWOperation::equals(RWOperation op)
 {
     bool ret = op.getConstraintName().compare(getConstraintName());
-    //cout << "equals --> " << op.getConstraintName() << " == " << getConstraintName() << " ? " << ret << "\n"; //debug
+    //cout << "equals --> " << op.getConstraintName() << " == " << getConstraintName() << " ? " << ret << endl; //debug
     return !ret;
 }
 
@@ -160,11 +160,11 @@ void RWOperation::print()
 {
     if(isWrite)
     {
-        cout << "[" << threadId << "] W-" << var << "-" << id <<" = $" << value << "$&" << filename << "@" << line << "\n";
+        cout << "[" << threadId << "] W-" << var << "-" << id <<" = $" << value << "$&" << filename << "@" << line << endl;
     }
     else
     {
-        cout << "[" << threadId << "] R-" << var << "-" << id << "&" << filename << "@" << line << "\n";
+        cout << "[" << threadId << "] R-" << var << "-" << id << "&" << filename << "@" << line << endl;
     }
 }
 
@@ -188,7 +188,7 @@ void PathOperation::setExpression(string exp){
 
 void PathOperation::print()
 {
-    cout << "[" << threadId << "]: " << expr << "\n";
+    cout << "[" << threadId << "]: " << expr << endl;
 }
 
 //** class LockPairOperation ***************
@@ -255,7 +255,7 @@ bool LockPairOperation::isFakeUnlock(){
 
 void LockPairOperation::print()
 {
-    cout << "[" << threadId << "] " << var << "-" << id << "/"<< unlockVarId << "&" << filename << "Lock@" << line << " Unlock@" << unlockLine << "\n";
+    cout << "[" << threadId << "] " << var << "-" << id << "/"<< unlockVarId << "&" << filename << "Lock@" << line << " Unlock@" << unlockLine << endl;
 }
 
 //** class SyncOperation ***************
@@ -307,7 +307,7 @@ string SyncOperation::getOrderConstraintName()
 void SyncOperation::print()
 {
     if(var.empty())
-        cout << "[" << threadId << "] " << type << "&" << filename << "@" << line << "\n";
+        cout << "[" << threadId << "] " << type << "&" << filename << "@" << line << endl;
     else
-        cout << "[" << threadId << "] " << type << "_" << var << "-" << id << "&" << filename << "@" << line << "\n";
+        cout << "[" << threadId << "] " << type << "_" << var << "-" << id << "&" << filename << "@" << line << endl;
 }

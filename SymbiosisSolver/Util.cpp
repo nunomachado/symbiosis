@@ -97,7 +97,7 @@ pid_t util::popen2(const char *command, int *infp, int *outfp)
     
     if (pipe(p_stdin) != 0 || pipe(p_stdout) != 0)
     {
-        cout << "pipe(p_stdin) = " << pipe(p_stdin) << "\tpipe(p_stdout) = " << pipe(p_stdout) << "\n";
+        cout << "pipe(p_stdin) = " << pipe(p_stdin) << "\tpipe(p_stdout) = " << pipe(p_stdout) << endl;
         perror(">> Error creating the pipe");
         exit(EXIT_FAILURE);
         return -1;
@@ -231,7 +231,7 @@ std::string util::parseVar(std::string op)
     init = op.find_last_of("_")+1;
     end = op.find_first_of("-",init);
     var = op.substr(init,end-init);
-    //cout << "1: " << var << "\n";
+    //cout << "1: " << var << endl;
    
     //for JPF, the address might be the same for different variables (?), so we have to parse the var name as well
     //naive way of checking whether we are in jpfmode: count the length of the var
@@ -248,6 +248,6 @@ std::string util::parseVar(std::string op)
         
         var = op.substr(init,end-init);
     }
-    //cout << "2: " << var << "\n";
+    //cout << "2: " << var << endl;
     return var;
 }
