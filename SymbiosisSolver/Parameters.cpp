@@ -23,6 +23,7 @@ std::string sourceFilePath = "";
 bool failedExec = false;
 
 std::vector<Operation*> failScheduleOrd;
+std::vector<std::string> altScheduleOrd;
 std::map<std::string, std::vector<Operation*> > operationsByThread;    //map thread id -> vector with thread's operations
 
 

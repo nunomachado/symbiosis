@@ -19,7 +19,7 @@ namespace util{
     
     
     std::string threadTabsPP(int tab);               //add 3x(thread_ID) to a better PP
-    void fillScheduleOrd(std::string tid, std::map< std::string, std::vector<Operation*>> *op_list );
+    void fillScheduleOrd(std::string tid, std::map< std::string, std::vector<Operation*>> *op_list , Schedule* schedule);
     int getTid(std::string op);                    //return ID from a operation;
     std::string stringValueOf(int i);                           //transforms an int into a string
     int intValueOf(std::string i);                           //transforms a string into an int

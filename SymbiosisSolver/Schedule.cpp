@@ -15,10 +15,13 @@ using namespace std;
 
 
 //Print Schedule using OrderConstraintName
-void scheduleLIB::printSch (Schedule sch){
+void scheduleLIB::printSch(Schedule sch){
     int i = 0 ;
     cout << "Schedule size: " << sch.size()<< endl;
     cout << "Schedule contextSwitches: " << getContextSwitchNum(sch)<< endl;
+   
+    
+    
     for(Schedule ::iterator it = sch.begin(); it != sch.end(); ++it) {
         int strID = util::intValueOf((*it)->getThreadId());
         string tabs = util::threadTabsPP(strID);
@@ -27,6 +30,100 @@ void scheduleLIB::printSch (Schedule sch){
         cout << (*it)->getOrderConstraintName() << endl;
         i++;
     }
+    cout << endl << endl;
+}
+
+
+//return a non empty vector<string (operations)>
+vector<string> cleanEmpty(vector<string> *globalOrderTmp)
+{
+    vector<string> globalOrder;
+    for(int i = 0; i < globalOrderTmp->size(); i++){
+        string op = (*globalOrderTmp)[i];
+        if(!op.empty()){
+            globalOrder.push_back(op);
+        }
+    }
+    return globalOrder;
+}
+
+
+
+//fill Schedule
+void scheduleLIB::loadSchedule(vector<string> *globalOrderTmp)
+{
+    map<string,vector<Operation*> > t2op = operationsByThread;
+    //clean empty positions in globalOrder
+    vector<string> globalOrder = cleanEmpty(globalOrderTmp);
+    Schedule scheduleTmp; //TODO isto deixou de fazer sentido pq temos estruturas diferentes para fail and altschedule
+    scheduleTmp.clear();
+    scheduleTmp.reserve(globalOrder.size());
+    
+    
+    
+    
+    if(!bugFixMode)
+    {
+        for(int i = 0; i < globalOrder.size(); i++)
+        {
+            string op = globalOrder[i];
+            
+            int id = util::getTid(op);
+            string tid = util::stringValueOf(id);
+            
+            //fill failScheduleOrd
+            util::fillScheduleOrd(tid, &t2op, &scheduleTmp);
+        }
+        failScheduleOrd.clear();
+        failScheduleOrd.reserve(globalOrder.size());
+        failScheduleOrd = scheduleTmp;
+    }
+    else
+    {
+        altScheduleOrd = globalOrder;
+    }
+}
+
+
+// transform a given schedule do a string's vector
+std::vector<std::string> scheduleLIB::schedule2string(Schedule schedule)
+{
+    vector<string> listOp;
+    for(Schedule::iterator it= schedule.begin() ; it != schedule.end(); it ++)
+    {
+        listOp.push_back((*it)->getOrderConstraintName());
+    }
+    return listOp;
+}
+
+
+//saveSch2file
+void scheduleLIB::saveScheduleFile(string filename, vector<string> listOp){
+    // open the output file to store the solution
+    string solConst;
+    std::ofstream solFile;
+    
+    solFile.open(filename, ios::trunc);
+    if(!solFile.is_open())
+    {
+        cerr << " -> Error opening file "<< formulaFile <<".\n";
+        solFile.close();
+        exit(0);
+    }
+    cout << "Saving solution to file: " << filename << endl;
+    
+    int labelsol = 0; //label counter (we can't use i, because some positions in globalOrder array may be empty)
+    for(int i = 0; i < listOp.size()-1; i++)
+    {
+        string op = listOp[i];
+        
+        //add solution constraint to
+        solConst = "(assert (! (< "+listOp[i]+" "+listOp[i+1]+" ):named solution"+util::stringValueOf(labelsol)+"))\n";
+        solFile << solConst;  //write to solution file
+        labelsol++;
+        
+    }
+    solFile.close();
 }
 
 

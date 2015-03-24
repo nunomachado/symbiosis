@@ -886,16 +886,14 @@ bool verifyConstraintModel(ConstModelGen *cmgen)
     cout << "\n### SOLVING CONSTRAINT MODEL: Z3\n";
     success = cmgen->solve();
     
-    
     cout<< "\n\nOLD SCH" << endl;
     scheduleLIB::printSch(failScheduleOrd);
-    
+        
     Schedule simpleSch = scheduleLIB::scheduleSimplify(failScheduleOrd,cmgen);
-    
+    scheduleLIB::saveScheduleFile(solutionFile,scheduleLIB::schedule2string(simpleSch));
+        
     cout<< "\n\nNEW SCH" << endl;
-    scheduleLIB::printSch(simpleSch);
-    
-    
+    scheduleLIB::printSch(failScheduleOrd);
     
     //** clean data structures
     cmgen->resetSolver();
@@ -1535,6 +1533,9 @@ int main(int argc, char *const* argv)
     if(bugFixMode)
     {
         findBugRootCause();
+        solutionFile.insert(solutionFile.find(".txt"),"ALT");
+        scheduleLIB::saveScheduleFile(solutionFile,altScheduleOrd);
+
     }
     else
     {

@@ -383,7 +383,7 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
     
     //for each exclusive write in the alt schedule, add all data-dependencies from
     //reads in the same thread of the exclusive read (i.e. mark all reads that are affected by that particular write)
-    for(map<string,string>::iterator ait = exclusiveAlt.begin(); ait!=exclusiveAlt.end();++ait)
+   /* for(map<string,string>::iterator ait = exclusiveAlt.begin(); ait!=exclusiveAlt.end();++ait)
     {
         string writeAlt = ait->second;
         string readAlt = ait->first;
@@ -412,7 +412,7 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
                 cout << "Relevant Fail:\t" << tmpR << " <-- " << writeAlt << "\n";
             }
         }
-    }
+    }*/
     
     
     //** sort ids in ascending order

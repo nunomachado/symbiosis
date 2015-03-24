@@ -22,6 +22,9 @@ namespace scheduleLIB{
 
     int getContextSwitchNum(Schedule sch);     //return the number of context switches
     void printSch (Schedule sch);     //Print Schedule using OrderConstraintName
+    std::vector<std::string> schedule2string(Schedule schedule); // transform a given schedule do a string's vector
+    void saveScheduleFile(std::string filename, std::vector<std::string> listOperation);  //save a given operation's vector and store it in a given filename
+    void loadSchedule(std::vector<std::string> *globalOrderTmp); //fill failScheduleOrd and altScheduleOrd
     std::string getTidOperation(Operation op);     //return the operation/action thread ID
     int getTEIsize(Schedule schedule, int initPosition);     // receive TID start position and return TID size with the
     bool isLastActionTEI(Schedule sch, int pos);    //cheeck if action in a given position is the last one in its TEI

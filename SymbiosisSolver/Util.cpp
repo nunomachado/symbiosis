@@ -35,10 +35,10 @@ string util::threadTabsPP(int tab){
 
 
 //fill ScheduleOrd
-void util::fillScheduleOrd(string tid, map<string,vector<Operation*>>* op_list){
+void util::fillScheduleOrd(string tid, map<string,vector<Operation*>>* op_list, Schedule* sch){
     
     //get the head
-    failScheduleOrd.push_back(&(*(*op_list)[tid][0]));
+    sch->push_back((*op_list)[tid][0]);
     
     //remove the head
     vector<Operation*>::iterator it_erase = (*op_list)[tid].begin();

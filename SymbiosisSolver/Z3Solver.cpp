@@ -9,6 +9,7 @@
 #include "Z3Solver.h"
 #include "Util.h"
 #include "Parameters.h"
+#include "Schedule.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -19,6 +20,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <map>
+
 
 #define LINEMAX 256
 
@@ -96,6 +98,19 @@ string Z3Solver::readLinePipe()
 
 
 
+
+//
+string getOpDefinition(string line)
+{
+    int posBegin = (int)line.find("(define-fun ") + 12;  //place posBegin in the first char of the order operation
+    int posEnd = (int)line.find("()") - 1;               //place posEnd in the last char of the order operation
+    
+    return line.substr(posBegin, posEnd-posBegin);
+}
+
+
+
+
 /*
  *  Parses the solver output. If the model is satisfiable, return true and write the solution to file.
  *  Otherwise, return false and store the unsat core in a variable.
@@ -123,10 +138,7 @@ bool Z3Solver::checkSat()
         }
         else if(line.find("(define-fun") != std::string::npos)  //its an operation definition
         {
-            int posBegin = (int)line.find("(define-fun ") + 12;  //place posBegin in the first char of the order operation
-            int posEnd = (int)line.find("()") - 1;               //place posEnd in the last char of the order operation
-            
-            opName = line.substr(posBegin, posEnd-posBegin);
+            opName = getOpDefinition(line);
             
             if(opName.front()=='O')
                 isOrderOp = true;
@@ -182,90 +194,16 @@ bool Z3Solver::checkSat()
                 unsatCore.push_back(lastConst+1);
             }
         }
-        //*/
         line = readLinePipe();
     }
-    
     if(isSat)
     {
-        
-        //** open the output file to store the solution
-        string solConst;
-        std::ofstream solFile;
-        
-        //** change the output filename in bugFixMode to avoid overwriting the original solution file
-        if(bugFixMode && solutionFile.find("ALT")==string::npos){
-            solutionFile.insert(solutionFile.find(".txt"),"ALT");
-        }
-        
-        solFile.open(solutionFile, ios::trunc);
-        cout << "Saving solution to file: " << solutionFile << endl;
-        if(!solFile.is_open())
-        {
-            cerr << " -> Error opening file "<< formulaFile <<".\n";
-            solFile.close();
-            exit(0);
-        }
-        
         double solvingTime = difftime(endTime, startTime);//(double)(endTime-startTime)/(double) CLOCKS_PER_SEC;
         cout << "[Solver] Solution found in "<< solvingTime<<"s:\n\n";
-        
-        //print thread ids
-        map<string,int> tabCounters;
-        int counter = 0;
-        for(std::vector<std::string>::iterator it = threadIds.begin(); it != threadIds.end(); ++it)
-        {
-            string tid = *it;
-            cout << "T" << tid << "\t\t\t";
-            tabCounters[tid] = counter++;
-        }
-        cout << "\n\n";
-        
-        
-        //clean empty positions in globalOrder
-        vector<string> globalOrder;
-        for(int i = 0; i < globalOrderTmp.size(); i++){
-            string op = globalOrderTmp[i];
-            if(!op.empty()){
-                globalOrder.push_back(op);
-            }
-        }
-        
-        //print operations in order
-        int labelsol = 0; //label counter (we can't use i, because some positions in globalOrder array may be empty)
-        
-        //fill failScheduleOrd with the ordered Operation
-        failScheduleOrd.clear();
-        failScheduleOrd.reserve(globalOrder.size());
-        map<string,vector<Operation*> > t2op = operationsByThread;
-
-        for(int i = 0; i < globalOrder.size(); i++)
-        {
-            string op = globalOrder[i];
-            
-            //add solution constraint to file
-            if(i < globalOrder.size()-1
-               && !globalOrder[i].empty() && !globalOrder[i+1].empty())
-            {
-                solConst = "(assert (! (< "+op+" "+globalOrder[i+1]+" ):named solution"+util::stringValueOf(labelsol)+"))\n";
-                solFile << solConst;  //write to solution file
-                labelsol++;
-            }
-            
-            int id = util::getTid(op);
-            string tid = util::stringValueOf(id);
-            
-            
-            //fill failScheduleOrd
-            util::fillScheduleOrd(tid, &t2op);
-            
-            string tabN = util::threadTabsPP(tabCounters[tid]);
-            cout << tabN;
-            cout << "[" << i << "] " << op << endl;
-        }
-        cout << ">> FailScheduleOrd populated!\n";
-        solFile.close();
+        scheduleLIB::loadSchedule(&globalOrderTmp); // can be failScheduleOrd or altScheduleOrd depending on the boolean flag bugFixMode
     }
+    
+    
     return isSat;
 }
 
