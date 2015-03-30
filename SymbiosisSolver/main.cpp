@@ -1351,7 +1351,7 @@ void findBugRootCause()
 {
     map<string, int> mapOpToId; //map: operation name -> id in 'solution' array
     map<EventPair, vector<string> > altSchedules; //set used to store the event pairs that yield a sat non-failing alternative schedule
-    bool success; //indicates whether we have found a bug-avoiding schedule
+    bool success= false; //indicates whether we have found a bug-avoiding schedule
     int numAttempts = 0; //counts the number of attempts to find a sat alternate schedule
     
     ConstModelGen* cmgen = new ConstModelGen();

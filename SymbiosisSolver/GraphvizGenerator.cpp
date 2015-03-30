@@ -255,14 +255,14 @@ void graphgen::genAllGraphSchedules(vector<string> failSchedule, map<EventPair, 
     for(int oit = (int)failSchedule.size()-1; oit >= 0;oit--)
     {
         string opA = failSchedule[oit];
+
+        if(opA.find("OR-") == string::npos)
+            continue;
         
         //fill map lockVariables
         if(opA.find("OS-lock")!= string::npos){
             fillMaplockVariables(opA);
         }
-        
-        if(opA.find("OR-") == string::npos)
-            continue;
         
         string varA = util::parseVar(opA);
         
@@ -302,15 +302,13 @@ void graphgen::genAllGraphSchedules(vector<string> failSchedule, map<EventPair, 
 }
 
 
-void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, vector<string> altSchedule)
-{
-    readDependAlt.clear();
-    dependIdsAlt.clear();
-    
-    //** compute data-dependencies for AltSchedule
-    for(int oit = altSchedule.size()-(float)1; oit >= 0;oit--)
+
+//** compute data-dependencies for AltSchedule
+void computeDataDependencies(vector<string> schedule){
+
+    for(int oit = schedule.size()-(float)1; oit >= 0;oit--)
     {
-        string opA = altSchedule[oit];
+        string opA = schedule[oit];
         
         if(opA.find("OR-") == string::npos)
             continue;
@@ -319,12 +317,11 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
         
         for(int iit = oit; iit >= 0; iit--)
         {
-            string opB = altSchedule[iit];
+            string opB = schedule[iit];
             string varB = util::parseVar(opB);
             
             if(varA==varB && opB.find("OW")!=string::npos)
             {
-                //cout << "   " << opA << " <-- " << opB << "\n";
                 readDependAlt[opA] = opB; //add dependence "A is data dependent on B"
                 if(writeDependAlt.count(opB)){
                     writeDependAlt[opB].push_back(opA);
@@ -340,26 +337,40 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
             }
         }
     }
-    
-    //** compute exclusive dependencies (i.e. dependencies that appear only in the failing
-    //** schedule or in the alternate schedule)
-    vector<int> exclusiveFailIds;
-    vector<int> exclusiveAltIds;
-    exclusiveFail.clear();
-    exclusiveAlt.clear();
-    
+}
+
+
+//** compute exclusive dependencies (i.e. dependencies that appear only in the failing
+//** schedule or in the alternate schedule)
+void computeExclusiveDependencies(vector<int>* exclusiveFailIds, vector<int>* exclusiveAltIds)
+{
     for(map<string,string>::iterator dit = readDependFail.begin(); dit!=readDependFail.end();++dit)
     {
         string writeFail = dit->second;
+        string varFail = util::parseVar(writeFail);
+        
+        // check whether operations in the read-dependencies have the same variable as those of the unsat core
+        bool sameVar = false;
+        for(vector<string>::iterator it = bugCondOps.begin(); it!=bugCondOps.end();++it)
+        {
+            string varBCO = util::parseVar(*it);
+            if(varFail==varBCO){
+                sameVar = true;
+                break;
+            }
+            
+        }
+        if(!sameVar)
+            continue;
+        
         string writeAlt = readDependAlt[dit->first];
-        //if(readDependAlt[dit->first]!=dit->second)
         if(writeFail!=writeAlt)
         {
             //FAILING SCHEDULE
             if(writeFail!=""){
                 exclusiveFail[dit->first] = dit->second;
-                exclusiveFailIds.push_back(dependIdsFail[dit->first]);
-                exclusiveFailIds.push_back(dependIdsFail[dit->second]);
+                exclusiveFailIds->push_back(dependIdsFail[dit->first]);
+                exclusiveFailIds->push_back(dependIdsFail[dit->second]);
                 cout << "Exclusive Fail:\t" << dit->first << " <-- " << dit->second << "\n";
                 
                 //add relevant threads
@@ -370,8 +381,8 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
             //ALT SCHEDULE
             if(writeAlt!=""){
                 exclusiveAlt[dit->first] = writeAlt;
-                exclusiveAltIds.push_back(dependIdsAlt[dit->first]);
-                exclusiveAltIds.push_back(dependIdsAlt[writeAlt]);
+                exclusiveAltIds->push_back(dependIdsAlt[dit->first]);
+                exclusiveAltIds->push_back(dependIdsAlt[writeAlt]);
                 cout << "Exclusive Alt:\t" << dit->first << " <-- " << writeAlt << "\n";
                 
                 //add relevant threads
@@ -380,64 +391,28 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
             numDepDifDebug++;
         }
     }
-    
-    //for each exclusive write in the alt schedule, add all data-dependencies from
-    //reads in the same thread of the exclusive read (i.e. mark all reads that are affected by that particular write)
-   /* for(map<string,string>::iterator ait = exclusiveAlt.begin(); ait!=exclusiveAlt.end();++ait)
-    {
-        string writeAlt = ait->second;
-        string readAlt = ait->first;
-        string tid = util::parseThreadId(readAlt);
-        
-        for(vector<string>::iterator rit = writeDependAlt[writeAlt].begin();
-            rit != writeDependAlt[writeAlt].end();++rit)
-        {
-            string tmpR = *rit;
-            if(tmpR.compare(readAlt) && tid==util::parseThreadId(tmpR))
-            {
-                exclusiveAlt[tmpR] = writeAlt;
-                exclusiveAltIds.push_back(dependIdsAlt[tmpR]);
-                cout << "Relevant Alt:\t" << tmpR << " <-- " << writeAlt << "\n";
-            }
-        }
-        
-        for(vector<string>::iterator rit = writeDependFail[writeAlt].begin();
-            rit != writeDependFail[writeAlt].end();++rit)
-        {
-            string tmpR = *rit;
-            if(!exclusiveFail.count(tmpR) && tid==util::parseThreadId(tmpR))
-            {
-                exclusiveFail[tmpR] = writeAlt;
-                exclusiveFailIds.push_back(dependIdsFail[tmpR]);
-                cout << "Relevant Fail:\t" << tmpR << " <-- " << writeAlt << "\n";
-            }
-        }
-    }*/
-    
-    
     //** sort ids in ascending order
-    sort(exclusiveFailIds.begin(),exclusiveFailIds.end());
-    sort(exclusiveAltIds.begin(),exclusiveAltIds.end());
+    sort(exclusiveFailIds->begin(),exclusiveFailIds->end());
+    sort(exclusiveAltIds->begin(),exclusiveAltIds->end());
     
-    
-    //**    1) compute thread segments for both schedules
-    //**    2) cut-off irrelevant, common prefix
-    //**    3) cut-off threads that don't exhibit dependence changes in their segments
-    //**    4) mark as "bold" the segments that became bigger in the alt schedule
-    vector<ThreadSegment> segsFail;
-    vector<ThreadSegment> segsAlt;
-    
-    //** ---- segments for failing schedule
-    string op = failSchedule[0];
+}
+
+
+// Compute thread segments for both schedules
+vector<ThreadSegment> computeSegments(vector<string> schedule, vector<int>* exclusiveSchIds)
+{
+   
+    vector<ThreadSegment> segsList;
+    string op = schedule[0];
     string prevTid = util::parseThreadId(op); //indicates the last thread id observed
     
     int initSeg = 0;  //indicates the start of the current segment
     int dependIt = 0; //iterator for exclusiveFail/AltIds; allows to check if a given block encompasses operations with dependencies or not
     
     int oit;
-    for(oit = 1; oit < failSchedule.size();oit++)
+    for(oit = 1; oit < schedule.size();oit++)
     {
-        op = failSchedule[oit];
+        op = schedule[oit];
         string tid = util::parseThreadId(op);
         
         if(tid != prevTid)
@@ -450,23 +425,23 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
             tseg.tid = prevTid;
             
             //check if the current block comprises operations with dependencies
-            for(int dit = dependIt; dit < exclusiveFailIds.size(); dit++)
+            for(int dit = dependIt; dit < exclusiveSchIds->size(); dit++)
             {
                 dependIt = dit;
                 
-                if(tseg.endPos < exclusiveFailIds[dit])
+                if(tseg.endPos < (*exclusiveSchIds)[dit])
                     break;
                 
-                if(tseg.initPos > exclusiveFailIds[dit])
+                if(tseg.initPos > (*exclusiveSchIds)[dit])
                     continue;
                 
                 tseg.hasDependencies = true;
-                tseg.dependencies.push_back(exclusiveFailIds[dit]);
+                tseg.dependencies.push_back((*exclusiveSchIds)[dit]);
             }
             
             //only add segments of relevant threads
             if(relevantThreads.find(tseg.tid)!=relevantThreads.end()){
-                segsFail.push_back(tseg);
+                segsList.push_back(tseg);
             }
             prevTid = tid;
             initSeg = oit;
@@ -482,112 +457,84 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
     tseg.tid = prevTid;
     
     //check if the current block comprises operations with dependencies
-    for(int dit = dependIt; dit < exclusiveFailIds.size(); dit++)
+    for(int dit = dependIt; dit < exclusiveSchIds->size(); dit++)
     {
         dependIt = dit;
         
-        if(tseg.endPos < exclusiveFailIds[dit])
+        if(tseg.endPos < (*exclusiveSchIds)[dit])
             break;
         
-        if(tseg.initPos > exclusiveFailIds[dit])
+        if(tseg.initPos > (*exclusiveSchIds)[dit])
             continue;
         
         tseg.hasDependencies = true;
-        tseg.dependencies.push_back(exclusiveFailIds[dit]);
+        tseg.dependencies.push_back((*exclusiveSchIds)[dit]);
     }
     if(relevantThreads.find(tseg.tid)!=relevantThreads.end()){
-        segsFail.push_back(tseg);
+        segsList.push_back(tseg);
     }
-    
-    
-    //** ---- segments for alt schedule
-    op = altSchedule[0];
-    prevTid = util::parseThreadId(op); //indicates the last thread id observed
-    
-    initSeg = 0;  //indicates the start of the current segment
-    dependIt = 0; //iterator for exclusiveFail/AltIds; allows to check if a given block encompasses operations with dependencies or not
-    
-    for(oit = 1; oit < altSchedule.size();oit++)
+    return segsList;
+}
+
+
+
+
+//for each exclusive write in the alt schedule, add all data-dependencies from
+//reads in the same thread of the exclusive read (i.e. mark all reads that are affected by that particular write)
+void addAllReadDependencies(vector<int>* exclusiveFailIds,vector<int>* exclusiveAltIds)
+{
+    for(map<string,string>::iterator ait = exclusiveAlt.begin(); ait!=exclusiveAlt.end();++ait)
     {
-        op = altSchedule[oit];
-        string tid = util::parseThreadId(op);
+        string writeAlt = ait->second;
+        string readAlt = ait->first;
+        string tid = util::parseThreadId(readAlt);
         
-        if(tid != prevTid)
+        for(vector<string>::iterator rit = writeDependAlt[writeAlt].begin();
+            rit != writeDependAlt[writeAlt].end();++rit)
         {
-            ThreadSegment tseg;
-            tseg.initPos = initSeg;
-            tseg.endPos = oit-1; //the endPos is the last operation of the previous segment
-            tseg.markAtomic = false;
-            tseg.hasDependencies = false;
-            tseg.tid = prevTid;
-            
-            //check if the current block comprises operations with dependencies
-            for(int dit = dependIt; dit < exclusiveAltIds.size(); dit++)
+            string tmpR = *rit;
+            if(tmpR.compare(readAlt) && tid==util::parseThreadId(tmpR))
             {
-                dependIt = dit;
-                
-                if(tseg.endPos < exclusiveAltIds[dit])
-                    break;
-                
-                if(tseg.initPos > exclusiveAltIds[dit])
-                    continue;
-                
-                tseg.hasDependencies = true;
-                tseg.dependencies.push_back(exclusiveAltIds[dit]);
+                exclusiveAlt[tmpR] = writeAlt;
+                exclusiveAltIds->push_back(dependIdsAlt[tmpR]);
+                cout << "Relevant Alt:\t" << tmpR << " <-- " << writeAlt << "\n";
             }
-            
-            //only add segments of relevant threads
-            if(relevantThreads.find(tseg.tid)!=relevantThreads.end()){
-                segsAlt.push_back(tseg);
+        }
+        
+        for(vector<string>::iterator rit = writeDependFail[writeAlt].begin();
+            rit != writeDependFail[writeAlt].end();++rit)
+        {
+            string tmpR = *rit;
+            if(!exclusiveFail.count(tmpR) && tid==util::parseThreadId(tmpR))
+            {
+                exclusiveFail[tmpR] = writeAlt;
+                exclusiveFailIds->push_back(dependIdsFail[tmpR]);
+                cout << "Relevant Fail:\t" << tmpR << " <-- " << writeAlt << "\n";
             }
-            prevTid = tid;
-            initSeg = oit;
         }
     }
-    
-    //** handle last case
-    ThreadSegment lseg;
-    lseg.initPos = initSeg;
-    lseg.endPos = oit-1; //the endPos is the last operation of the previous segment
-    lseg.markAtomic = false;
-    lseg.hasDependencies = false;
-    lseg.tid = prevTid;
-    
-    //check if the current block comprises operations with dependencies
-    for(int dit = dependIt; dit < exclusiveAltIds.size(); dit++)
-    {
-        dependIt = dit;
-        
-        if(lseg.endPos < exclusiveAltIds[dit])
-            break;
-        
-        if(lseg.initPos > exclusiveAltIds[dit])
-            continue;
-        
-        lseg.hasDependencies = true;
-        lseg.dependencies.push_back(exclusiveAltIds[dit]);
-    }
-    if(relevantThreads.find(lseg.tid)!=relevantThreads.end()){
-        segsAlt.push_back(lseg);
-    }
-    
-    //** cutoff common prefix
-    vector<ThreadSegment>::iterator fit = segsFail.begin();
+}
+
+
+//**    2) cut-off irrelevant, common prefix
+void cutOffPrefix( vector<ThreadSegment>* segsFail, vector<ThreadSegment>* segsAlt, vector<string>* failSchedule, vector<string>* altSchedule)
+{
+    vector<ThreadSegment>::iterator fit = segsFail->begin();
     
     //for each segment check if the the corresponding segment in alt schedule is of the same size of not
-    while(fit != segsFail.end())
+    while(fit != segsFail->end())
     {
-        vector<ThreadSegment>::iterator ait = segsAlt.begin();
-        while(ait != segsAlt.end() && fit != segsFail.end())
+        vector<ThreadSegment>::iterator ait = segsAlt->begin();
+        while(ait != segsAlt->end() && fit != segsFail->end())
         {
             ThreadSegment fseg = *fit;
             ThreadSegment aseg = *ait;
             
-            string fOp = failSchedule[fseg.initPos]; //first operation of the fail segment
-            string aOp = altSchedule[aseg.initPos]; //first operation of the alt segment
+            string fOp = (*failSchedule)[fseg.initPos]; //first operation of the fail segment
+            string aOp = (*altSchedule)[aseg.initPos]; //first operation of the alt segment
             
-            //if operations are different, then proceed
-            if(fOp.compare(aOp)){
+            if(fOp.compare(aOp)){   //if operations are different, then proceed
+
                 ait++;
             }
             else
@@ -599,10 +546,10 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
                    !fseg.hasDependencies &&
                    asize == fsize)
                 {
-                    fit = segsFail.erase(fit);
-                    ait = segsAlt.erase(ait);
+                    fit = segsFail->erase(fit);
+                    ait = segsAlt->erase(ait);
                     
-                    if(fit==segsFail.end())
+                    if(fit==segsFail->end())
                         break;
                     else
                         continue;
@@ -613,26 +560,31 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
                 }
                 //move forward in the failing segments and restart iterating over the alt segments
                 fit++;
-                ait = segsAlt.begin();
+                ait = segsAlt->begin();
             }
         }
-        if(fit==segsFail.end())
+        if(fit==segsFail->end())
             break;
         else
             fit++;
     }
+}
+
+
+
+//new - cutoff identical events within thread segments (this is not optimized, as it could have been done in the previous cycle..)
+void cutOffIdenticalEvents(vector<ThreadSegment>* segsFail, vector<ThreadSegment>* segsAlt, vector<string>* failSchedule, vector<string>* altSchedule)
+{
+    vector<ThreadSegment>::iterator fit = segsFail->begin();
     
-    
-    //new - cutoff identical events within thread segments (this is not optimized, as it could have been done in the previous cycle..)
-    fit = segsFail.begin();
-    while(fit != segsFail.end())
+    while(fit != segsFail->end())
     {
-        vector<ThreadSegment>::iterator ait = segsAlt.begin();
-        while(ait != segsAlt.end() && fit != segsFail.end())
+        vector<ThreadSegment>::iterator ait = segsAlt->begin();
+        while(ait != segsAlt->end() && fit != segsFail->end())
         {
             //prune common prefix within the segments, until operations are different or one of them has a dependency
-            string fOp = failSchedule[fit->initPos]; //first operation of the fail segment
-            string aOp = altSchedule[ait->initPos]; //first operation of the alt segment
+            string fOp = (*failSchedule)[fit->initPos]; //first operation of the fail segment
+            string aOp = (*altSchedule)[ait->initPos]; //first operation of the alt segment
             
             if(fOp == aOp){
                 bool isDependency = false;
@@ -656,17 +608,17 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
                     if(!isDependency){
                         fit->initPos++;
                         ait->initPos++;
-                        fOp = failSchedule[fit->initPos];
-                        aOp = altSchedule[ait->initPos];
+                        fOp = (*failSchedule)[fit->initPos];
+                        aOp = (*altSchedule)[ait->initPos];
                     }
                 }
                 
                 //erase potential empty segments
                 if(fit->initPos > fit->endPos)
-                    fit = segsFail.erase(fit);
+                    fit = segsFail->erase(fit);
                 
                 if(ait->initPos > ait->endPos)
-                    ait = segsAlt.erase(ait);
+                    ait = segsAlt->erase(ait);
                 
                 break;
             }
@@ -676,7 +628,53 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
         }
         fit++;
     }
+}
+
+
+
+
+void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, vector<string> altSchedule)
+{
+    readDependAlt.clear();
+    dependIdsAlt.clear();
     
+    /**
+      compute data-dependencies for AltSchedule
+      fill global vars: writeDependAlt,readDependAlt and dependIdsAlt
+     */
+    computeDataDependencies(altSchedule);
+    
+    //** compute exclusive dependencies (i.e. dependencies that appear only in the failing
+    //** schedule or in the alternate schedule)
+    vector<int> exclusiveFailIds;
+    vector<int> exclusiveAltIds;
+    exclusiveFail.clear();
+    exclusiveAlt.clear();
+    computeExclusiveDependencies(&exclusiveFailIds, &exclusiveAltIds);
+    
+    //for each exclusive write in the alt schedule, add all data-dependencies from
+    //reads in the same thread of the exclusive read (i.e. mark all reads that are affected by that particular write
+    // ### Uncomment if needed... addAllReadDependencies(&exclusiveFailIds,&exclusiveAltIds);
+    
+    
+    //**    1) compute thread segments for both schedules
+    //**    2) cut-off irrelevant, common prefix
+    //**    3) cut-off threads that don't exhibit dependence changes in their segments
+    //**    4) mark as "bold" the segments that became bigger in the alt schedule
+    
+    
+    // Compute thread segments for both schedules
+    vector<ThreadSegment> segsFail = computeSegments(failSchedule, &exclusiveFailIds);     // ---- segments for failing schedule
+    vector<ThreadSegment> segsAlt = computeSegments(altSchedule, &exclusiveAltIds);       // ---- segments for alt schedule
+    
+    // Cutoff common prefix
+    cutOffPrefix( &segsFail, &segsAlt, &failSchedule, &altSchedule);
+
+    
+    //new - cutoff identical events within thread segments (this is not optimized, as it could have been done in the previous cycle..)
+    cutOffIdenticalEvents(&segsFail, &segsAlt, &failSchedule, &altSchedule);
+
+
     //draw graphviz file
     drawGraphviz(segsFail, segsAlt, failSchedule, altSchedule);
 }
@@ -799,15 +797,14 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
         {
             string op = failSchedule[j];
             string port = getFailDependencePort(op);
-            string friendlyStr = makeInstrFriendly(op);
+            string friendlyOp = cleanOperation(makeInstrFriendly(op));
             
             
             if(port.empty()){
-                outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << cleanOperation(friendlyStr) << "</td></tr>\n";
-                //outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << codeLine << "</td></tr>\n";
+                outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << friendlyOp<< "</td></tr>\n";
             }
             else{
-                outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor=\"red\">" << cleanOperation(friendlyStr) << "</td></tr>\n";
+                outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor=\"red\">" << friendlyOp << "</td></tr>\n";
                 opToPort[("f"+op)] = "f"+util::stringValueOf(i)+":"+port+":e";
             }
             numEventsDifDebug++;
@@ -858,13 +855,13 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
             }
             
             string port = getAltDependencePort(op);
-            string friendlyStr = makeInstrFriendly(op);
+            string friendlyStr = cleanOperation(makeInstrFriendly(op));
             
             if(port.empty()){
-                outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << cleanOperation(friendlyStr) << "</td></tr>\n";
+                outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << friendlyStr << "</td></tr>\n";
             }
             else{
-                outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor=\"green\">" << cleanOperation(friendlyStr) << "</td></tr>\n";
+                outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor=\"green\">" << friendlyStr << "</td></tr>\n";
                 opToPort[("a"+op)] = "a"+util::stringValueOf(i)+":"+port+":e";
             }
         }
