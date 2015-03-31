@@ -1103,12 +1103,12 @@ void generateConstraintModel()
             if(!syncset.empty())
             {
                 cout<< "\n-- OTHER SYNC SET\n";
-                for(vector<SyncOperation>::iterator it = syncset.begin() ; it!=syncset.end(); ++it)
+                for(vector<SyncOperation>::iterator it = syncset.begin(); it!=syncset.end(); ++it)
                     it->print();
             }
             
             cout<< "\n-- PATH SET\n";
-            for(vector<PathOperation>::iterator it = pathset.begin() ; it!=pathset.end(); ++it)
+            for(vector<PathOperation>::iterator it = pathset.begin(); it!=pathset.end(); ++it)
                 it->print();
             
             cout<< "\n### OPERATIONS BY THREAD\n";
@@ -1530,19 +1530,29 @@ void findBugRootCause()
 int main(int argc, char *const* argv)
 {
     parse_args(argc, argv);
-    if(bugFixMode)
-    {
-        findBugRootCause();
-        solutionFile.insert(solutionFile.find(".txt"),"ALT");
-        scheduleLIB::saveScheduleFile(solutionFile,altScheduleOrd);
-
-    }
-    else
+    if(!bugFixMode)
     {
         //parse_avisoTrace();
         generateConstraintModel();
+        for(map<string,string>::iterator it = solutionValues.begin();it!= solutionValues.end();it++){
+            cout << it->first << " : " << it-> second << endl;
+        }
+        
+        //save variable values to file
+        util::saveVarValues2File(sourceFilePath+("Values.txt"),solutionValues);
     }
-    
+    else
+    {
+        //load variable values from file
+        solutionValues = util::loadVarValuesFromFile(sourceFilePath+"Values.txt");
+        
+        //findBug
+        findBugRootCause();
+        
+        //save solution schedule
+        solutionFile.insert(solutionFile.find(".txt"),"ALT");
+        scheduleLIB::saveScheduleFile(solutionFile,altScheduleOrd);
+    }
     return 0;
 }
 

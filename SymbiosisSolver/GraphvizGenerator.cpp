@@ -676,10 +676,20 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
 
 
     //draw graphviz file
-    drawGraphviz(segsFail, segsAlt, failSchedule, altSchedule);
+    drawGraphviz(segsFail, segsAlt, failSchedule, altSchedule, invPair);
 }
 
 
+string getVarValue(string op)
+{
+    for(map<string,string>::iterator it = solutionValues.begin(); it != solutionValues.end(); it++)
+    {
+        if (op.find(it->first)!= string::npos)
+            return it->second;
+    }
+    return "";
+
+}
 
 string makeInstrFriendly(string instruction){
 
@@ -688,6 +698,13 @@ string makeInstrFriendly(string instruction){
     int isOSlock = (int)instruction.find("OS-lock");
     int isOSunlock = (int)instruction.find("OS-unlock");
     string friendlyInstr = instruction;
+    
+    
+    string value = getVarValue(friendlyInstr);
+    if (value != "")
+    {
+        value = "       value " + value;
+    }
     
     if(string::npos != filenameP && string::npos != lineP){
         
@@ -708,7 +725,7 @@ string makeInstrFriendly(string instruction){
         string codeLine = graphgen::getCodeLine(line, filename);
         friendlyInstr = filename+" L"+codeLine;
     }
-    return friendlyInstr;
+    return friendlyInstr;// + value;
 }
 
 
@@ -749,7 +766,7 @@ string graphgen::getCodeLine(int line, string filename)
  * Draws the graphviz file for a given failing schedule and alternate schedule
  *
  */
-void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment> segsAlt, vector<string> failSchedule, vector<string> altSchedule)
+void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment> segsAlt, vector<string> failSchedule, vector<string> altSchedule, EventPair invPair)
 {
     std::ofstream outFile;
     map<string,string> opToPort; //for a given operation, indicates its port label of form "tableId:port"
@@ -774,7 +791,12 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
         exit(0);
     }
     
-    outFile << "digraph G {\n\tranksep=.25; size = \"7.5,10\";\n\tnode [shape=record]\n\n";
+    outFile << "digraph G {\n\tcenter=1;\n\tranksep=.25; size = \"7.5,10\";\n\tnode [shape=record]\n\n";
+    
+    
+    outFile << "labelloc=top;\n";
+    outFile << "labeljust=left;\n";
+    outFile << "label=\"FOUND BUG AVOIDING SCHEDULE:\\n" << bugCauseToGviz(invPair, failSchedule) << "\"\n\n";
     
     //** draw all segments for the failing schedule
     for(int i = 0; i < segsFail.size(); i++)
@@ -821,7 +843,7 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
     //** draw data-dependence edges for the failing schedule
     for(map<string,string>::iterator it = exclusiveFail.begin(); it!=exclusiveFail.end();++it)
     {
-        outFile << opToPort[("f"+it->second)] << " -> " << opToPort[("f"+it->first)] << " [color=red, style=bold];\n";
+        outFile << opToPort[("f"+it->second)] << " -> " << opToPort[("f"+it->first)] << " [color=red, fontcolor=red, style=bold, label=\"" << getVarValue(it->first) << "\"] ;\n" ;
     }
     
     outFile << "\n\n";
@@ -877,7 +899,7 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
     //** draw data-dependence edges for the alternate schedule
     for(map<string,string>::iterator it = exclusiveAlt.begin(); it!=exclusiveAlt.end();++it)
     {
-        outFile << opToPort[("a"+it->second)] << " -> " << opToPort[("a"+it->first)] << " [color=darkgreen, style=bold];\n";
+        outFile << opToPort[("a"+it->second)] << " -> " << opToPort[("a"+it->first)] << " [color=darkgreen, fontcolor=darkgreen, style=bold][label=\"" << getVarValue(it->first) << "\"] ;\n" ;
     }
     
     outFile << "}\n";

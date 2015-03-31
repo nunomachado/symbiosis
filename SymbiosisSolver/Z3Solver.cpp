@@ -127,7 +127,7 @@ bool Z3Solver::checkSat()
     
     while (line.compare("end") != 0 && line.compare("end") != 1)
     {
-        //cout << line;
+        //cout << "\n\n"<<line << endl;
         if(!line.compare("unsat")) {
             cout << "[Solver] Model Satisfiability: "<< line << endl;
         }
@@ -139,11 +139,18 @@ bool Z3Solver::checkSat()
         else if(line.find("(define-fun") != std::string::npos)  //its an operation definition
         {
             opName = getOpDefinition(line);
-            
             if(opName.front()=='O')
                 isOrderOp = true;
-            else
+            else if((opName.front()=='R' && opName.find("R-") != std::string::npos) || opName.find("InitR-") != std::string::npos){
                 isReadOp = true;
+                line = readLinePipe();
+                int posBegin = (int)line.find_last_of(" ") + 1;  //place posBegin in the first char of the value
+                int posEnd = (int)line.find_last_of(")");        //place posEnd in the last char of the value
+                string value = line.substr(posBegin, posEnd-posBegin);
+                //cout <<"OpName:"<< opName << endl;
+                //cout <<"Value:"<< value << endl;
+                solutionValues.insert(std::pair<string,string>(opName,value));
+            }
         }
         else if(isOrderOp) //its an index for a previous read variable definition
         {

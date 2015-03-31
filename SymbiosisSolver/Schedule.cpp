@@ -59,9 +59,6 @@ void scheduleLIB::loadSchedule(vector<string> *globalOrderTmp)
     scheduleTmp.clear();
     scheduleTmp.reserve(globalOrder.size());
     
-    
-    
-    
     if(!bugFixMode)
     {
         for(int i = 0; i < globalOrder.size(); i++)

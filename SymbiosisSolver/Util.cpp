@@ -10,12 +10,14 @@
 #include "Parameters.h"
 #include <sstream>
 #include <string>
-#include <iostream>
+//#include <iostream>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fstream>
+
 
 #define READ 0
 #define WRITE 1
@@ -23,8 +25,51 @@
 using namespace std;
 
 
+
+void util::saveVarValues2File(std::string filename, std::map<std::string, std::string> mapValues)
+{
+    ofstream outFile;
+    outFile.open(filename, ios::trunc);
+    if(!outFile.is_open())
+    {
+        cerr << " -> Error opening file "<< filename <<".\n";
+        outFile.close();
+        exit(0);
+    }
+    cout << "Saving Map Structure to file: " << filename << "\n";
+
+    for(map<string,string>::iterator it= mapValues.begin(); it!= mapValues.end();it++)
+    {
+        outFile << it->first << endl;
+        outFile << it->second << endl;
+    }    outFile.close();
+
+}
+
+std::map<std::string, std::string> util::loadVarValuesFromFile(std::string filename)
+{
+    map<string, string> mapValues;
+    string first_var;
+    string second_value;
+    ifstream inSol(filename);
+    string lineSol;
+    while (getline(inSol, lineSol))
+    {
+        first_var = lineSol;
+        getline(inSol, lineSol);
+        second_value = lineSol;
+        mapValues.insert(pair<string,string>(first_var,second_value));
+    }
+    inSol.close();
+    return mapValues;
+    
+}
+
+
+
 //add 3x(thread_ID) to a better PP
-string util::threadTabsPP(int tab){
+string util::threadTabsPP(int tab)
+{
     string str = "";
     for(int j = 0; j < tab ; j++) //print the number of tabs
     {
@@ -35,7 +80,8 @@ string util::threadTabsPP(int tab){
 
 
 //fill ScheduleOrd
-void util::fillScheduleOrd(string tid, map<string,vector<Operation*>>* op_list, Schedule* sch){
+void util::fillScheduleOrd(string tid, map<string,vector<Operation*>>* op_list, Schedule* sch)
+{
     
     //get the head
     sch->push_back((*op_list)[tid][0]);
@@ -48,7 +94,8 @@ void util::fillScheduleOrd(string tid, map<string,vector<Operation*>>* op_list, 
 
 
 //returne ThreadID from a string
-int util::getTid(std::string op){
+int util::getTid(std::string op)
+{
     
     int posBegin = (int)op.find_first_of("-", op.find_first_of("-") + 1)+1;
     while(op.at(posBegin) == '>'){

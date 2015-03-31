@@ -31,7 +31,7 @@ typedef std::vector<Operation*> Schedule;
     extern bool failedExec;             //indicates whether the traces correspond to a failing or successful execution
 
     //global vars
-    //Change this to parameters.h
+    extern std::map<std::string,std::string> solutionValues; // stores values of SMT solution
     extern std::map<std::string, std::vector<Operation*> > operationsByThread;    //map thread id -> vector with thread's operations
     extern std::vector<Operation*> failScheduleOrd; // vector to store the fail schedules operations in order
     extern std::vector<std::string> altScheduleOrd;    // vector to store the alternate schedules operations in order, TODO std::vector<Operation*>

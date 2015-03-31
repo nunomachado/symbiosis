@@ -29,7 +29,9 @@ typedef std::pair<int,int> Segment;
 typedef std::pair<Segment,Segment> EventPair;
 
 std::string pairToString(EventPair p, std::vector<std::string> solution); //EventPair pretty print
-std::string bugCauseToString(EventPair p, std::vector<std::string> solution); //pretty print when bug root cause found 
+std::string bugCauseToString(EventPair p, std::vector<std::string> solution); //pretty print when bug root cause found
+std::string bugCauseToGviz(EventPair p, std::vector<std::string> solution); //print bug root cause to graphviz
+
 
 /* struct representing a segment of contiguous instructions
  * executed by the same thread in a given execution schedule

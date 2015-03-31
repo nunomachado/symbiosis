@@ -18,6 +18,8 @@
 namespace util{
     
     
+    void saveVarValues2File(std::string filename, std::map<std::string, std::string> mapValues); // store a map in a file
+    std::map<std::string, std::string> loadVarValuesFromFile(std::string filename); // load map from a file
     std::string threadTabsPP(int tab);               //add 3x(thread_ID) to a better PP
     void fillScheduleOrd(std::string tid, std::map< std::string, std::vector<Operation*>> *op_list , Schedule* schedule);
     int getTid(std::string op);                    //return ID from a operation;

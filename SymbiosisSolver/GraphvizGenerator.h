@@ -24,7 +24,7 @@ namespace graphgen{
     
     void genGraphSchedule(std::vector<std::string> failSchedule, EventPair invPair, std::vector<std::string> altSchedule);
     
-    void drawGraphviz(std::vector<ThreadSegment> segsFail, std::vector<ThreadSegment> segsAlt, std::vector<std::string> failSchedule, std::vector<std::string> altSchedule);
+    void drawGraphviz(std::vector<ThreadSegment> segsFail, std::vector<ThreadSegment> segsAlt, std::vector<std::string> failSchedule, std::vector<std::string> altSchedule, EventPair invPair);
 }
 
 #endif /* defined(__symbiosisSolver__GraphvizGenerator__) */
