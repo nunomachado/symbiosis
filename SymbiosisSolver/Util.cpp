@@ -262,7 +262,7 @@ std::string util::parseThreadId(std::string op)
     //account for operations without variable id
     if(tid.length() > 3)
     {
-        end = op.find_first_of("@");
+        end = op.find_first_of("&");
         init = op.find_last_of("-")+1;
         tid = op.substr(init,end-init);
     }
