@@ -398,10 +398,46 @@ void computeExclusiveDependencies(vector<int>* exclusiveFailIds, vector<int>* ex
 }
 
 
+
+
+//adding adjacents locks and unlocks from an exclusiveSchID
+void addLockOp2Dependencies(vector<string>* schedule, ThreadSegment* tseg, int i, vector<int>* exclusiveSchIds)
+{
+    if((*schedule)[i].find("lock_")!= string::npos)
+    {
+        string str = (*schedule)[i];
+        cout << str << endl;
+        return ; // exit if is lock or unlock
+    }
+    string str = (*schedule)[i];
+    cout << str << endl;
+    
+    int j,k;
+    for(j = i-1; j > 0; j--)
+    {
+        if((*schedule)[j].find("-lock_")!= string::npos)
+        {
+            (tseg->dependencies).push_back(j);
+            exclusiveSchIds->push_back(j); //add lock id to exclusive. No need for sort
+            for(k = i+1; k < schedule->size(); k++)
+            {
+                if((*schedule)[k].find("-unlock_")!= string::npos)
+                {
+                    (tseg->dependencies).push_back(k);
+                    exclusiveSchIds->push_back(k); //add unlock id to exclusive. No need for sort
+                    break; //found fst unlock
+                }
+            }
+            break; //found fst lock
+        }
+    }
+}
+
+
+
 // Compute thread segments for both schedules
 vector<ThreadSegment> computeSegments(vector<string> schedule, vector<int>* exclusiveSchIds)
 {
-   
     vector<ThreadSegment> segsList;
     string op = schedule[0];
     string prevTid = util::parseThreadId(op); //indicates the last thread id observed
@@ -410,7 +446,7 @@ vector<ThreadSegment> computeSegments(vector<string> schedule, vector<int>* excl
     int dependIt = 0; //iterator for exclusiveFail/AltIds; allows to check if a given block encompasses operations with dependencies or not
     
     int oit;
-    for(oit = 1; oit < schedule.size();oit++)
+    for(oit = 1; oit < schedule.size(); oit++)
     {
         op = schedule[oit];
         string tid = util::parseThreadId(op);
@@ -425,7 +461,7 @@ vector<ThreadSegment> computeSegments(vector<string> schedule, vector<int>* excl
             tseg.tid = prevTid;
             
             //check if the current block comprises operations with dependencies
-            for(int dit = dependIt; dit < exclusiveSchIds->size(); dit++)
+            for(int dit = dependIt; dit < exclusiveSchIds->size(); dit++) // check if there are exclusive operations (position) that compreend the segment borders (init and end)
             {
                 dependIt = dit;
                 
@@ -436,12 +472,26 @@ vector<ThreadSegment> computeSegments(vector<string> schedule, vector<int>* excl
                     continue;
                 
                 tseg.hasDependencies = true;
-                tseg.dependencies.push_back((*exclusiveSchIds)[dit]);
+                //cout << "New dependencie " << (*exclusiveSchIds)[dit] << " " << schedule[dit] << " TID: " << tseg.tid << endl;
+                tseg.dependencies.push_back((*exclusiveSchIds)[dit]); // add new position to segment.dependencies
+                addLockOp2Dependencies(&schedule,&tseg,(*exclusiveSchIds)[dit], exclusiveSchIds);
+
             }
-            
             //only add segments of relevant threads
             if(relevantThreads.find(tseg.tid)!=relevantThreads.end()){
                 segsList.push_back(tseg);
+                
+                /*
+                for(vector<string>::iterator it = schedule.begin(); it < schedule.end(); it++)
+                {
+                    cout << (*it) << endl;
+                }
+                int z;
+                for(z = 0; z < tseg.dependencies.size(); z++)
+                {
+                    cout << "Dependencies:" <<tseg.dependencies[z] << endl;
+                }
+                */
             }
             prevTid = tid;
             initSeg = oit;
@@ -729,12 +779,48 @@ string makeInstrFriendly(string instruction){
 }
 
 
+
+
+//remove special caracteres and white spaces between line number and operation
+string cleanInitSpacesOp(string ret)
+{
+    ret = ret.substr(ret.find_first_of("1234567890")); //remove de /x01 caracter
+    
+    //find line number and store it in lineN
+    int endNum = 0;
+    for(string::iterator itC= ret.begin(); itC != ret.end(); itC++)
+    {
+        if(isnumber(*itC))
+            endNum++;
+        else
+            break;
+    }
+    string lineN = ret.substr(0,endNum);
+    
+    //find operation initial position and store operation in strOp
+    int initCode = endNum;
+    for(string::iterator itC= ret.begin()+endNum+1; itC != ret.end(); itC++)
+    {
+        if((*itC)==' ')
+            initCode++;
+        else
+            break;
+    }
+    string strOp = ret.substr(initCode,ret.size());
+
+    //built pretty line + operation
+    ret = lineN + " " + strOp;
+    cout  << "\ncodeLine: "<< ret << endl;
+    return ret;
+}
+
+
+//get operation from file
 string graphgen::getCodeLine(int line, string filename)
 {
     numOps = 0;
     
     string opendir = "cd "+ sourceFilePath;
-    //string opendir = "cd /Users/drk/Desktop/symbiosisProj/Tests/simpleAssert";
     string line2code = "nl -ba "+ filename+" | grep  \"  "+ util::stringValueOf(line) +  "\\t\"";
     string sysExeGetCodeLine = (opendir+"; "+line2code);
     char *command = (char *)sysExeGetCodeLine.c_str();
@@ -753,12 +839,28 @@ string graphgen::getCodeLine(int line, string filename)
     {
         ret = ret + c[0];
         read(procR,c,1);
-        //getline(procRDK,c);
     }
-    ret = ret.substr(ret.find_first_of("1234567890")); //remove de /x01 caracter
-    cout  << "\ncodeLine: "<< ret << "\n";
-    return ret;
+    return cleanInitSpacesOp(ret); //remove special caracteres and white spaces between line number and operation
+}
+
+
+
+
+
+//checks if the segment contains the root cause, if in "fail" print table in red otherwise green
+bool containsBugCauseOp(ThreadSegment fseg, vector<string> sch, string bugCauseStr, string type)
+{
+    string firstPart = bugCauseStr.substr(0, bugCauseStr.find(" should")-2);
+    //string secondPart = bugCauseStr.substr( bugCauseStr.find(" [")+2, bugCauseStr.find("..")- 1 - (bugCauseStr.find(" [")+1));
     
+    
+    int i;
+    for(i = fseg.initPos; i <= fseg.endPos; i++)
+    {
+        if (sch[i].find(firstPart) != string::npos) // || sch[i].find(secondPart) != string::npos) Mark just the segment that contains the first part of the bug cause!
+            return true;
+    }
+    return false;
 }
 
 
@@ -791,19 +893,29 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
         exit(0);
     }
     
+    string bugCauseStr = bugCauseToGviz(invPair, failSchedule);
+    
     outFile << "digraph G {\n\tcenter=1;\n\tranksep=.25; size = \"7.5,10\";\n\tnode [shape=record]\n\n";
     
     
     outFile << "labelloc=top;\n";
     outFile << "labeljust=left;\n";
-    outFile << "label=\"FOUND BUG AVOIDING SCHEDULE:\\n" << bugCauseToGviz(invPair, failSchedule) << "\"\n\n";
+    outFile << "label=\"FOUND BUG AVOIDING SCHEDULE:\\n" << bugCauseStr << "\"\n\n";
     
     //** draw all segments for the failing schedule
     for(int i = 0; i < segsFail.size(); i++)
     {
         ThreadSegment fseg = segsFail[i];
         outFile << "f" << i << " [fontname=\"Helvetica\", fontsize=\"11\", shape=none, margin=0,\n";
-        outFile << "\tlabel=<<table border=\"0\" cellspacing=\"0\">\n";
+        if(containsBugCauseOp( fseg, failSchedule, bugCauseStr, "fail"))
+        {
+            outFile << "\tlabel=<<table border=\"2\" color=\"#A00000\" cellspacing=\"0\">\n";
+        }
+        else
+        {
+            outFile << "\tlabel=<<table border=\"0\" cellspacing=\"0\">\n";
+        }
+        
         outFile << "\t\t<tr><td border=\"1\" bgcolor=\""<< threadColors[fseg.tid]<<"\"><font point-size=\"14\">T"<<fseg.tid<<"</font></td></tr>\n";
         
         
@@ -853,13 +965,19 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
     {
         ThreadSegment aseg = segsAlt[i];
         outFile << "a" << i << " [fontname=\"Helvetica\", fontsize=\"11\", shape=none, margin=0,\n";
-        outFile << "\tlabel=<<table border=\"";
-        
-        if(aseg.markAtomic){
-            outFile << "4\" cellspacing=\"0\">\n";
+        if(containsBugCauseOp( aseg, altSchedule, bugCauseStr,"alternate"))
+        {
+            outFile << "\tlabel=<<table border=\"2\" color=\"darkgreen\" cellspacing=\"0\">\n";
         }
-        else{
-            outFile << "0\" cellspacing=\"0\">\n";
+        else
+        {
+            outFile << "\tlabel=<<table border=\"";
+            if(aseg.markAtomic){
+                outFile << "4\" cellspacing=\"0\">\n";
+            }
+            else{
+                outFile << "0\" cellspacing=\"0\">\n";
+            }
         }
         
         outFile << "\t\t<tr><td border=\"1\" bgcolor=\""<< threadColors[aseg.tid]<<"\"><font point-size=\"14\">T"<<aseg.tid<<"</font></td></tr>\n";
