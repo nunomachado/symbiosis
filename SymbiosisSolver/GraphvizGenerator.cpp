@@ -220,9 +220,9 @@ void fillMaplockVariables(string op)
     string lockVarName = getLockVarName(filename,line,lockVarID);
         //cout << "\nVarName: " << lockVarName;
     storePair(lockVarID,lockVarName);
-    
+
     string aux = getVarName(lockVarID);
-    cout << "\nMap " << aux;
+    cout << "Map " << aux<< endl;
 }
 
 
@@ -256,13 +256,13 @@ void graphgen::genAllGraphSchedules(vector<string> failSchedule, map<EventPair, 
     {
         string opA = failSchedule[oit];
 
-        if(opA.find("OR-") == string::npos)
-            continue;
-        
         //fill map lockVariables
         if(opA.find("OS-lock")!= string::npos){
             fillMaplockVariables(opA);
         }
+        
+        if(opA.find("OR-") == string::npos)
+            continue;
         
         string varA = util::parseVar(opA);
         
