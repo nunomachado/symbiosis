@@ -864,13 +864,25 @@ bool containsBugCauseOp(ThreadSegment fseg, vector<string> sch, string bugCauseS
 }
 
 
+
+
+//Draw header in graphvizFile
+void drawHeader(ofstream &outFile, string bugSolution, EventPair invPair, vector<string> failSchedule)
+{
+    outFile << "digraph G {\n\tcenter=1;\n\tranksep=.25; size = \"7.5,10\";\n\tnode [shape=record]\n\n";
+    outFile << "labelloc=top;\n";
+    outFile << "labeljust=left;\n";
+    outFile << "label=\"FOUND BUG AVOIDING SCHEDULE:\\n" << bugSolution << "\"\n\n";
+
+}
+
 /*
  * Draws the graphviz file for a given failing schedule and alternate schedule
  *
  */
 void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment> segsAlt, vector<string> failSchedule, vector<string> altSchedule, EventPair invPair)
 {
-    std::ofstream outFile;
+    ofstream outFile;
     map<string,string> opToPort; //for a given operation, indicates its port label of form "tableId:port"
     
     string path = solutionFile.substr(0, solutionFile.find_last_of("/"));
