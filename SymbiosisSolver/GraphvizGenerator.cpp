@@ -905,21 +905,17 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
         exit(0);
     }
     
-    string bugCauseStr = bugCauseToGviz(invPair, failSchedule);
-    
-    outFile << "digraph G {\n\tcenter=1;\n\tranksep=.25; size = \"7.5,10\";\n\tnode [shape=record]\n\n";
-    
-    
-    outFile << "labelloc=top;\n";
-    outFile << "labeljust=left;\n";
-    outFile << "label=\"FOUND BUG AVOIDING SCHEDULE:\\n" << bugCauseStr << "\"\n\n";
-    
+    string bugSolution = bugCauseToGviz(invPair, failSchedule);
+    string previousOp = "", nextOp = "";
+
+    //draw file header
+    drawHeader(outFile, bugSolution, invPair, failSchedule);
     //** draw all segments for the failing schedule
     for(int i = 0; i < segsFail.size(); i++)
     {
         ThreadSegment fseg = segsFail[i];
         outFile << "f" << i << " [fontname=\"Helvetica\", fontsize=\"11\", shape=none, margin=0,\n";
-        if(containsBugCauseOp( fseg, failSchedule, bugCauseStr, "fail"))
+        if(containsBugCauseOp( fseg, failSchedule, bugSolution, "fail"))
         {
             outFile << "\tlabel=<<table border=\"2\" color=\"#A00000\" cellspacing=\"0\">\n";
         }
@@ -944,14 +940,29 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
             string op = failSchedule[j];
             string port = getFailDependencePort(op);
             string friendlyOp = cleanOperation(makeInstrFriendly(op));
-            
+            if(j < fseg.endPos-1)
+            {
+                string opNext = failSchedule[j+1];
+                string friendlyOpNext = cleanOperation(makeInstrFriendly(opNext));
+                nextOp= friendlyOpNext;
+            }
             
             if(port.empty()){
-                outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << friendlyOp<< "</td></tr>\n";
+                if(friendlyOp == previousOp || friendlyOp == nextOp)
+                {
+                    continue;
+                }
+                else
+                {
+                    outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << friendlyOp<< "</td></tr>\n";
+                    previousOp = friendlyOp;
+                }
+                
             }
             else{
                 outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor=\"red\">" << friendlyOp << "</td></tr>\n";
                 opToPort[("f"+op)] = "f"+util::stringValueOf(i)+":"+port+":e";
+                previousOp = friendlyOp;
             }
             numEventsDifDebug++;
         }
@@ -972,12 +983,15 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
     
     outFile << "\n\n";
     
+    previousOp= "";
+    nextOp="";
+    
     //** draw all segments for the alternate schedule
     for(int i = 0; i < segsAlt.size(); i++)
     {
         ThreadSegment aseg = segsAlt[i];
         outFile << "a" << i << " [fontname=\"Helvetica\", fontsize=\"11\", shape=none, margin=0,\n";
-        if(containsBugCauseOp( aseg, altSchedule, bugCauseStr,"alternate"))
+        if(containsBugCauseOp( aseg, altSchedule, bugSolution,"alternate"))
         {
             outFile << "\tlabel=<<table border=\"2\" color=\"darkgreen\" cellspacing=\"0\">\n";
         }
@@ -997,6 +1011,12 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
         for(int j = aseg.initPos; j <= aseg.endPos; j++)
         {
             string op = altSchedule[j];
+            if(j < aseg.endPos-1)
+            {
+                string opNext = altSchedule[j+1];
+                string friendlyOpNext = cleanOperation(makeInstrFriendly(opNext));
+                nextOp= friendlyOpNext;
+            }
             
             //we don't want to print the failure operation in alt schedules
             if(op.find("FAILURE")!=string::npos){
@@ -1010,11 +1030,19 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
             string friendlyStr = cleanOperation(makeInstrFriendly(op));
             
             if(port.empty()){
-                outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << friendlyStr << "</td></tr>\n";
+                if(friendlyStr== previousOp || friendlyStr== nextOp)
+                    continue;
+                else
+                {
+                    outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << friendlyStr << "</td></tr>\n";
+                    previousOp = friendlyStr;
+                }
+                
             }
             else{
                 outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor=\"green\">" << friendlyStr << "</td></tr>\n";
                 opToPort[("a"+op)] = "a"+util::stringValueOf(i)+":"+port+":e";
+                previousOp = friendlyStr;
             }
         }
         outFile << "\t</table>>\n]\n\n";
