@@ -873,8 +873,97 @@ void drawHeader(ofstream &outFile, string bugSolution, EventPair invPair, vector
     outFile << "labelloc=top;\n";
     outFile << "labeljust=left;\n";
     outFile << "label=\"FOUND BUG AVOIDING SCHEDULE:\\n" << bugSolution << "\"\n\n";
+}
+
+
+
+void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<string> schedule , map<string,string>* opToPort, string schType, string bugSolution)
+{
+    //** draw all segments for the failing schedule
+    string nextOp ="", previousOp ="";
+    
+    //differences between fail and alternate
+    string colorBug = "\"#A00000\"";
+    string nodeType = "f";
+    string lineColor = "\"red\"";
+    if(schType!="fail") //redefine variables to fit alternate needs
+    {
+        colorBug = "\"darkgreen\"";
+        nodeType = "a";
+        lineColor = "\"green\"";
+    }
+    
+    //** draw all segments for the alternate schedule
+
+    
+    for(int i = 0; i < segsSch.size(); i++)
+    {
+        ThreadSegment seg = segsSch[i];
+        outFile << nodeType << i << " [fontname=\"Helvetica\", fontsize=\"11\", shape=none, margin=0,\n";
+        if(containsBugCauseOp(seg, schedule, bugSolution, schType))//"fail"
+        {
+            outFile << "\tlabel=<<table border=\"2\" color=" + colorBug + " cellspacing=\"0\">\n";
+        }
+        else
+        {
+            outFile << "\tlabel=<<table border=\"0\" cellspacing=\"0\">\n";
+            if(schType!="fail"){
+                if(seg.markAtomic){
+                    outFile << "4\" cellspacing=\"0\">\n";
+                }
+                else{
+                    outFile << "0\" cellspacing=\"0\">\n";
+                }
+            }
+        }
+        outFile << "\t\t<tr><td border=\"1\" bgcolor=\""<< threadColors[seg.tid]<<"\"><font point-size=\"14\">T"<<seg.tid<<"</font></td></tr>\n";
+        
+        for(int j = seg.initPos; j <= seg.endPos; j++)
+        {
+            string op = schedule[j];
+            if(j < seg.endPos-1)
+            {
+                string opNext = schedule[j+1];
+                string friendlyOpNext = cleanOperation(makeInstrFriendly(opNext));
+                nextOp= friendlyOpNext;
+            }
+            if(schType!="fail")
+            {
+                //we don't want to print the failure operation in alt schedules
+                if(op.find("FAILURE")!=string::npos){
+                    if(seg.endPos-seg.initPos == 0) //replace FAILURE for exit if block only contains one operation
+                        op.replace(3, 7, "exit");
+                    else
+                        continue;
+                }
+            }
+            string port = getFailDependencePort(op);
+            string friendlyOp = cleanOperation(makeInstrFriendly(op));
+
+            if(port.empty()){
+                if(friendlyOp == previousOp || friendlyOp == nextOp)
+                {
+                    continue;
+                }
+                else
+                {
+                    outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << friendlyOp<< "</td></tr>\n";
+                    previousOp = friendlyOp;
+                }
+            }
+            else{
+                outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor="+ lineColor+">" << friendlyOp << "</td></tr>\n";
+                (*opToPort)[(nodeType+op)] = nodeType+util::stringValueOf(i)+":"+port+":e";
+                previousOp = friendlyOp;
+            }
+            numEventsDifDebug++;
+        }
+        outFile << "\t</table>>\n]\n\n";
+    }
 
 }
+
+
 
 /*
  * Draws the graphviz file for a given failing schedule and alternate schedule
@@ -910,7 +999,10 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
 
     //draw file header
     drawHeader(outFile, bugSolution, invPair, failSchedule);
-    //** draw all segments for the failing schedule
+    
+    //drawAllSegments
+    //drawAllSegments(outFile, segsFail, failSchedule ,&opToPort, "fail", bugSolution);
+    // draw all segments for the failing schedule
     for(int i = 0; i < segsFail.size(); i++)
     {
         ThreadSegment fseg = segsFail[i];
@@ -927,14 +1019,6 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
         outFile << "\t\t<tr><td border=\"1\" bgcolor=\""<< threadColors[fseg.tid]<<"\"><font point-size=\"14\">T"<<fseg.tid<<"</font></td></tr>\n";
         
         
-        /*
-         *ORIGIN
-         ThreadSegment fseg = segsFail[i];
-         outFile << "f" << i << " [fontname=\"Helvetica\", fontsize=\"11\", shape=none, margin=0,\n";
-         outFile << "\tlabel=<<table border=\"0\" cellspacing=\"0\">\n";
-         outFile << "\t\t<tr><td border=\"1\" bgcolor=\""<< threadColors[fseg.tid]<<"\"><font point-size=\"14\">T"<<fseg.tid<<"</font></td></tr>\n";
-         */
-        
         for(int j = fseg.initPos; j <= fseg.endPos; j++)
         {
             string op = failSchedule[j];
@@ -942,15 +1026,13 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
             string friendlyOp = cleanOperation(makeInstrFriendly(op));
             if(j < fseg.endPos-1)
             {
-                string opNext = failSchedule[j+1];
-                string friendlyOpNext = cleanOperation(makeInstrFriendly(opNext));
+                string friendlyOpNext = cleanOperation(makeInstrFriendly(failSchedule[j+1]));
                 nextOp= friendlyOpNext;
             }
-            
             if(port.empty()){
                 if(friendlyOp == previousOp || friendlyOp == nextOp)
                 {
-                    continue;
+                   // continue;
                 }
                 else
                 {
@@ -968,6 +1050,7 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
         }
         outFile << "\t</table>>\n]\n\n";
     }
+    
     
     //** draw edges for the failing schedule
     for(int i = 0; i < segsFail.size()-1; i++)
@@ -1030,9 +1113,9 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
             string friendlyStr = cleanOperation(makeInstrFriendly(op));
             
             if(port.empty()){
-                if(friendlyStr== previousOp || friendlyStr== nextOp)
-                    continue;
-                else
+                //if(friendlyStr== previousOp || friendlyStr== nextOp)
+                    //continue;
+                //else
                 {
                     outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << friendlyStr << "</td></tr>\n";
                     previousOp = friendlyStr;
