@@ -60,12 +60,19 @@ int numOps;                             //number of operations to ordered
  * Returns a port name if the operation is involved in a dependence
  * in the failing schedule. Otherwise, returns empty string.
  */
-string getFailDependencePort(string op)
+string getDependencePort(string op, string schType)
 {
     // if(exclusiveFail.count(op))
     //   return op;
+    map<string,string> exclusiveAux;
+    if (schType=="fail") {
+        exclusiveAux = exclusiveFail;
+    }
+    else
+        exclusiveAux = exclusiveAlt;
+    
     int counter = 1;
-    for(map<string,string>::iterator it = exclusiveFail.begin(); it!=exclusiveFail.end();++it)
+    for(map<string,string>::iterator it = exclusiveAux.begin(); it!=exclusiveAux.end();++it)
     {
         if(!op.compare(it->first))
             return (util::stringValueOf(counter)+"1");
@@ -77,24 +84,6 @@ string getFailDependencePort(string op)
     
     return "";
 }
-
-string getAltDependencePort(string op)
-{
-    int counter = 1;
-    for(map<string,string>::iterator it = exclusiveAlt.begin(); it!=exclusiveAlt.end();++it)
-    {
-        if(!op.compare(it->first))
-            return (util::stringValueOf(counter)+"1");
-        if(!op.compare(it->second))
-            return (util::stringValueOf(counter)+"2");;
-        
-        counter++;
-    }
-    
-    return "";
-}
-
-
 
 /*
  * Replaces CHAR "specialChar" (unsupported by graphviz) to "htmlCode"
@@ -877,25 +866,26 @@ void drawHeader(ofstream &outFile, string bugSolution, EventPair invPair, vector
 
 
 
-void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<string> schedule , map<string,string>* opToPort, string schType, string bugSolution)
+void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<string> schedule, string schType, string bugSolution)
 {
-    //** draw all segments for the failing schedule
+    
+    map<string,string> opToPort; //for a given operation, indicates its port label of form "tableId:port"
     string nextOp ="", previousOp ="";
     
-    //differences between fail and alternate
+    //differences between fail and alternate, by DEFAULT FAIL
+    map<string,string> exclusiveAux = exclusiveFail;
     string colorBug = "\"#A00000\"";
     string nodeType = "f";
     string lineColor = "\"red\"";
     if(schType!="fail") //redefine variables to fit alternate needs
     {
+        exclusiveAux = exclusiveAlt;
         colorBug = "\"darkgreen\"";
         nodeType = "a";
         lineColor = "\"green\"";
     }
     
     //** draw all segments for the alternate schedule
-
-    
     for(int i = 0; i < segsSch.size(); i++)
     {
         ThreadSegment seg = segsSch[i];
@@ -906,8 +896,8 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
         }
         else
         {
-            outFile << "\tlabel=<<table border=\"0\" cellspacing=\"0\">\n";
             if(schType!="fail"){
+                outFile << "\tlabel=<<table border=\"";
                 if(seg.markAtomic){
                     outFile << "4\" cellspacing=\"0\">\n";
                 }
@@ -915,6 +905,8 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
                     outFile << "0\" cellspacing=\"0\">\n";
                 }
             }
+            else
+                outFile << "\tlabel=<<table border=\"0\" cellspacing=\"0\">\n";
         }
         outFile << "\t\t<tr><td border=\"1\" bgcolor=\""<< threadColors[seg.tid]<<"\"><font point-size=\"14\">T"<<seg.tid<<"</font></td></tr>\n";
         
@@ -937,7 +929,7 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
                         continue;
                 }
             }
-            string port = getFailDependencePort(op);
+            string port = getDependencePort(op,schType);
             string friendlyOp = cleanOperation(makeInstrFriendly(op));
 
             if(port.empty()){
@@ -953,14 +945,25 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
             }
             else{
                 outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor="+ lineColor+">" << friendlyOp << "</td></tr>\n";
-                (*opToPort)[(nodeType+op)] = nodeType+util::stringValueOf(i)+":"+port+":e";
+                opToPort[(nodeType+op)] = nodeType+util::stringValueOf(i)+":"+port+":e";
                 previousOp = friendlyOp;
             }
             numEventsDifDebug++;
         }
         outFile << "\t</table>>\n]\n\n";
     }
-
+    
+    //** draw edges
+    for(int i = 0; i < segsSch.size()-1; i++)
+    {
+        outFile << nodeType <<i<<" -> "<< nodeType << i+1 <<";\n";
+    }
+    
+    //** draw data-dependence edges
+    for(map<string,string>::iterator it = exclusiveAux.begin(); it!=exclusiveAux.end(); ++it)
+    {
+        outFile << opToPort[(nodeType + it->second)] << " -> " << opToPort[(nodeType + it->first)] << " [color=red, fontcolor=red, style=bold, label=\"" << getVarValue(it->first) << "\"] ;\n\n\n" ;
+    }
 }
 
 
@@ -972,7 +975,6 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
 void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment> segsAlt, vector<string> failSchedule, vector<string> altSchedule, EventPair invPair)
 {
     ofstream outFile;
-    map<string,string> opToPort; //for a given operation, indicates its port label of form "tableId:port"
     
     string path = solutionFile.substr(0, solutionFile.find_last_of("/"));
     string appname = util::extractFileBasename(solutionFile);
@@ -1001,147 +1003,8 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
     drawHeader(outFile, bugSolution, invPair, failSchedule);
     
     //drawAllSegments
-    //drawAllSegments(outFile, segsFail, failSchedule ,&opToPort, "fail", bugSolution);
-    // draw all segments for the failing schedule
-    for(int i = 0; i < segsFail.size(); i++)
-    {
-        ThreadSegment fseg = segsFail[i];
-        outFile << "f" << i << " [fontname=\"Helvetica\", fontsize=\"11\", shape=none, margin=0,\n";
-        if(containsBugCauseOp( fseg, failSchedule, bugSolution, "fail"))
-        {
-            outFile << "\tlabel=<<table border=\"2\" color=\"#A00000\" cellspacing=\"0\">\n";
-        }
-        else
-        {
-            outFile << "\tlabel=<<table border=\"0\" cellspacing=\"0\">\n";
-        }
-        
-        outFile << "\t\t<tr><td border=\"1\" bgcolor=\""<< threadColors[fseg.tid]<<"\"><font point-size=\"14\">T"<<fseg.tid<<"</font></td></tr>\n";
-        
-        
-        for(int j = fseg.initPos; j <= fseg.endPos; j++)
-        {
-            string op = failSchedule[j];
-            string port = getFailDependencePort(op);
-            string friendlyOp = cleanOperation(makeInstrFriendly(op));
-            if(j < fseg.endPos-1)
-            {
-                string friendlyOpNext = cleanOperation(makeInstrFriendly(failSchedule[j+1]));
-                nextOp= friendlyOpNext;
-            }
-            if(port.empty()){
-                if(friendlyOp == previousOp || friendlyOp == nextOp)
-                {
-                   // continue;
-                }
-                else
-                {
-                    outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << friendlyOp<< "</td></tr>\n";
-                    previousOp = friendlyOp;
-                }
-                
-            }
-            else{
-                outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor=\"red\">" << friendlyOp << "</td></tr>\n";
-                opToPort[("f"+op)] = "f"+util::stringValueOf(i)+":"+port+":e";
-                previousOp = friendlyOp;
-            }
-            numEventsDifDebug++;
-        }
-        outFile << "\t</table>>\n]\n\n";
-    }
-    
-    
-    //** draw edges for the failing schedule
-    for(int i = 0; i < segsFail.size()-1; i++)
-    {
-        outFile << "f"<<i<<" -> "<<"f"<<i+1<<";\n";
-    }
-    
-    //** draw data-dependence edges for the failing schedule
-    for(map<string,string>::iterator it = exclusiveFail.begin(); it!=exclusiveFail.end();++it)
-    {
-        outFile << opToPort[("f"+it->second)] << " -> " << opToPort[("f"+it->first)] << " [color=red, fontcolor=red, style=bold, label=\"" << getVarValue(it->first) << "\"] ;\n" ;
-    }
-    
-    outFile << "\n\n";
-    
-    previousOp= "";
-    nextOp="";
-    
-    //** draw all segments for the alternate schedule
-    for(int i = 0; i < segsAlt.size(); i++)
-    {
-        ThreadSegment aseg = segsAlt[i];
-        outFile << "a" << i << " [fontname=\"Helvetica\", fontsize=\"11\", shape=none, margin=0,\n";
-        if(containsBugCauseOp( aseg, altSchedule, bugSolution,"alternate"))
-        {
-            outFile << "\tlabel=<<table border=\"2\" color=\"darkgreen\" cellspacing=\"0\">\n";
-        }
-        else
-        {
-            outFile << "\tlabel=<<table border=\"";
-            if(aseg.markAtomic){
-                outFile << "4\" cellspacing=\"0\">\n";
-            }
-            else{
-                outFile << "0\" cellspacing=\"0\">\n";
-            }
-        }
-        
-        outFile << "\t\t<tr><td border=\"1\" bgcolor=\""<< threadColors[aseg.tid]<<"\"><font point-size=\"14\">T"<<aseg.tid<<"</font></td></tr>\n";
-        
-        for(int j = aseg.initPos; j <= aseg.endPos; j++)
-        {
-            string op = altSchedule[j];
-            if(j < aseg.endPos-1)
-            {
-                string opNext = altSchedule[j+1];
-                string friendlyOpNext = cleanOperation(makeInstrFriendly(opNext));
-                nextOp= friendlyOpNext;
-            }
-            
-            //we don't want to print the failure operation in alt schedules
-            if(op.find("FAILURE")!=string::npos){
-                if(aseg.endPos-aseg.initPos == 0) //replace FAILURE for exit if block only contains one operation
-                    op.replace(3, 7, "exit");
-                else
-                    continue;
-            }
-            
-            string port = getAltDependencePort(op);
-            string friendlyStr = cleanOperation(makeInstrFriendly(op));
-            
-            if(port.empty()){
-                //if(friendlyStr== previousOp || friendlyStr== nextOp)
-                    //continue;
-                //else
-                {
-                    outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << friendlyStr << "</td></tr>\n";
-                    previousOp = friendlyStr;
-                }
-                
-            }
-            else{
-                outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor=\"green\">" << friendlyStr << "</td></tr>\n";
-                opToPort[("a"+op)] = "a"+util::stringValueOf(i)+":"+port+":e";
-                previousOp = friendlyStr;
-            }
-        }
-        outFile << "\t</table>>\n]\n\n";
-    }
-    
-    //** draw edges for the alternate schedule
-    for(int i = 0; i < segsAlt.size()-1; i++)
-    {
-        outFile << "a"<<i<<" -> "<<"a"<<i+1<<";\n";
-    }
-    
-    //** draw data-dependence edges for the alternate schedule
-    for(map<string,string>::iterator it = exclusiveAlt.begin(); it!=exclusiveAlt.end();++it)
-    {
-        outFile << opToPort[("a"+it->second)] << " -> " << opToPort[("a"+it->first)] << " [color=darkgreen, fontcolor=darkgreen, style=bold][label=\"" << getVarValue(it->first) << "\"] ;\n" ;
-    }
+    drawAllSegments(outFile, segsFail, failSchedule, "fail", bugSolution);
+    drawAllSegments(outFile, segsAlt, altSchedule, "alternate", bugSolution);
     
     outFile << "}\n";
     outFile.close();
