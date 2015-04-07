@@ -28,6 +28,7 @@ typedef std::vector<Operation*> Schedule;
     extern std::string solutionFile;    //path to the output file of the solution
     extern std::string sourceFilePath;  //path to the source code
     extern std::string assertThread;    //id of the thread that contains the assertion
+    extern std::string dspFlag;         //define which view the user wants in the result: "extended" "short" or default
     extern bool failedExec;             //indicates whether the traces correspond to a failing or successful execution
 
     //global vars

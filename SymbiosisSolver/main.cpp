@@ -74,8 +74,10 @@ void parse_args(int argc, char *const* argv)
             {"source", required_argument, 0, 'i'},
             {"debug", no_argument, 0, 'd'},
             {"fix-mode", no_argument, 0, 'f'},
+            {"dsp", required_argument, 0, 'u'},
+            {"", }
            
-            {0, 0, 0, 0}
+            
         };
         /* getopt_long stores the option index here. */
         int option_index = 0;
@@ -118,6 +120,9 @@ void parse_args(int argc, char *const* argv)
                 
             case 'f':
                 bugFixMode = true;
+                break;
+            case 'u':
+                dspFlag = optarg; // extended, short 
                 break;
                 
             /*case 'r':

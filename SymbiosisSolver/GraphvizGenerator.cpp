@@ -329,6 +329,20 @@ void computeDataDependencies(vector<string> schedule){
 }
 
 
+// check whether operations in the read-dependencies have the same variable as those of the unsat core
+bool isUnsatCoreOp(string varFail)
+{
+    bool sameVar = false;
+    for(vector<string>::iterator it = bugCondOps.begin(); it!=bugCondOps.end();++it)
+    {
+        string varBCO = util::parseVar(*it);
+        if(varFail==varBCO)
+            return true;
+    }
+    return sameVar;
+}
+
+
 //** compute exclusive dependencies (i.e. dependencies that appear only in the failing
 //** schedule or in the alternate schedule)
 void computeExclusiveDependencies(vector<int>* exclusiveFailIds, vector<int>* exclusiveAltIds)
@@ -339,17 +353,7 @@ void computeExclusiveDependencies(vector<int>* exclusiveFailIds, vector<int>* ex
         string varFail = util::parseVar(writeFail);
         
         // check whether operations in the read-dependencies have the same variable as those of the unsat core
-        bool sameVar = false;
-        for(vector<string>::iterator it = bugCondOps.begin(); it!=bugCondOps.end();++it)
-        {
-            string varBCO = util::parseVar(*it);
-            if(varFail==varBCO){
-                sameVar = true;
-                break;
-            }
-            
-        }
-        if(!sameVar)
+        if(dspFlag=="short" && !isUnsatCoreOp(varFail))
             continue;
         
         string writeAlt = readDependAlt[dit->first];
@@ -693,27 +697,27 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
     
     //for each exclusive write in the alt schedule, add all data-dependencies from
     //reads in the same thread of the exclusive read (i.e. mark all reads that are affected by that particular write
-    // ### Uncomment if needed... addAllReadDependencies(&exclusiveFailIds,&exclusiveAltIds);
-    
+    if(dspFlag=="extended")
+        addAllReadDependencies(&exclusiveFailIds,&exclusiveAltIds);
     
     //**    1) compute thread segments for both schedules
     //**    2) cut-off irrelevant, common prefix
     //**    3) cut-off threads that don't exhibit dependence changes in their segments
     //**    4) mark as "bold" the segments that became bigger in the alt schedule
     
-    
     // Compute thread segments for both schedules
     vector<ThreadSegment> segsFail = computeSegments(failSchedule, &exclusiveFailIds);     // ---- segments for failing schedule
     vector<ThreadSegment> segsAlt = computeSegments(altSchedule, &exclusiveAltIds);       // ---- segments for alt schedule
-    
+
+    if(dspFlag!="noCuts")
+    {
     // Cutoff common prefix
     cutOffPrefix( &segsFail, &segsAlt, &failSchedule, &altSchedule);
 
-    
     //new - cutoff identical events within thread segments (this is not optimized, as it could have been done in the previous cycle..)
-    cutOffIdenticalEvents(&segsFail, &segsAlt, &failSchedule, &altSchedule);
-
-
+        cutOffIdenticalEvents(&segsFail, &segsAlt, &failSchedule, &altSchedule);
+    }
+    
     //draw graphviz file
     drawGraphviz(segsFail, segsAlt, failSchedule, altSchedule, invPair);
 }
@@ -799,7 +803,6 @@ string cleanInitSpacesOp(string ret)
 
     //built pretty line + operation
     ret = lineN + " " + strOp;
-    cout  << "\ncodeLine: "<< ret << endl;
     return ret;
 }
 
@@ -871,18 +874,21 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
     
     map<string,string> opToPort; //for a given operation, indicates its port label of form "tableId:port"
     string nextOp ="", previousOp ="";
+    string friendlyOpNext = "";
     
     //differences between fail and alternate, by DEFAULT FAIL
     map<string,string> exclusiveAux = exclusiveFail;
-    string colorBug = "\"#A00000\"";
+    string colorBug = "\"red\"";
     string nodeType = "f";
     string lineColor = "\"red\"";
+    string gridColor = "\"#A00000\"";
     if(schType!="fail") //redefine variables to fit alternate needs
     {
         exclusiveAux = exclusiveAlt;
-        colorBug = "\"darkgreen\"";
+        colorBug = "\"green\"";
         nodeType = "a";
-        lineColor = "\"green\"";
+        lineColor = "\"darkgreen\"";
+        gridColor = "\"darkgreen\"";
     }
     
     //** draw all segments for the alternate schedule
@@ -892,7 +898,7 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
         outFile << nodeType << i << " [fontname=\"Helvetica\", fontsize=\"11\", shape=none, margin=0,\n";
         if(containsBugCauseOp(seg, schedule, bugSolution, schType))//"fail"
         {
-            outFile << "\tlabel=<<table border=\"2\" color=" + colorBug + " cellspacing=\"0\">\n";
+            outFile << "\tlabel=<<table border=\"2\" color=" + gridColor + " cellspacing=\"0\">\n";
         }
         else
         {
@@ -915,9 +921,8 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
             string op = schedule[j];
             if(j < seg.endPos-1)
             {
-                string opNext = schedule[j+1];
-                string friendlyOpNext = cleanOperation(makeInstrFriendly(opNext));
-                nextOp= friendlyOpNext;
+                nextOp = schedule[j+1];
+                friendlyOpNext = cleanOperation(makeInstrFriendly(nextOp));
             }
             if(schType!="fail")
             {
@@ -933,7 +938,7 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
             string friendlyOp = cleanOperation(makeInstrFriendly(op));
 
             if(port.empty()){
-                if(friendlyOp == previousOp || friendlyOp == nextOp)
+                if(friendlyOp == previousOp || (friendlyOp == friendlyOpNext && !(getDependencePort( nextOp, schType).empty()))) // jump write if 1) == previous, or 2) next operation is equal and specail (with a port)
                 {
                     continue;
                 }
@@ -944,7 +949,7 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
                 }
             }
             else{
-                outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor="+ lineColor+">" << friendlyOp << "</td></tr>\n";
+                outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor="+ colorBug+">" << friendlyOp << "</td></tr>\n";
                 opToPort[(nodeType+op)] = nodeType+util::stringValueOf(i)+":"+port+":e";
                 previousOp = friendlyOp;
             }
@@ -962,7 +967,7 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
     //** draw data-dependence edges
     for(map<string,string>::iterator it = exclusiveAux.begin(); it!=exclusiveAux.end(); ++it)
     {
-        outFile << opToPort[(nodeType + it->second)] << " -> " << opToPort[(nodeType + it->first)] << " [color=red, fontcolor=red, style=bold, label=\"" << getVarValue(it->first) << "\"] ;\n\n\n" ;
+        outFile << opToPort[(nodeType + it->second)] << " -> " << opToPort[(nodeType + it->first)] << " [color="+ lineColor +", fontcolor="+ lineColor + ", style=bold, label=\"" << getVarValue(it->first) << "\"] ;\n\n\n" ;
     }
 }
 

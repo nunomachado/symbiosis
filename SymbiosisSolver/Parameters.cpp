@@ -20,6 +20,8 @@ std::string formulaFile = "";
 std::string solutionFile = "";
 std::string assertThread = "";
 std::string sourceFilePath = "";
+std::string dspFlag = "";       //define which view the user wants in the result
+
 bool failedExec = false;
 
 std::map<std::string,std::string> solutionValues;
