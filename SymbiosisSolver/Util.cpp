@@ -24,8 +24,7 @@
 
 using namespace std;
 
-
-
+//write map values from a file
 void util::saveVarValues2File(std::string filename, std::map<std::string, std::string> mapValues)
 {
     ofstream outFile;
@@ -46,6 +45,7 @@ void util::saveVarValues2File(std::string filename, std::map<std::string, std::s
 
 }
 
+//read map values from a file
 std::map<std::string, std::string> util::loadVarValuesFromFile(std::string filename)
 {
     map<string, string> mapValues;
@@ -67,7 +67,7 @@ std::map<std::string, std::string> util::loadVarValuesFromFile(std::string filen
 
 
 
-//add 3x(thread_ID) to a better PP
+//add 3x(thread_ID) to a better Pretty Print
 string util::threadTabsPP(int tab)
 {
     string str = "";
@@ -82,35 +82,33 @@ string util::threadTabsPP(int tab)
 //fill ScheduleOrd
 void util::fillScheduleOrd(string tid, map<string,vector<Operation*>>* op_list, Schedule* sch)
 {
-    
     //get the head
     sch->push_back((*op_list)[tid][0]);
     
     //remove the head
     vector<Operation*>::iterator it_erase = (*op_list)[tid].begin();
     (*op_list)[tid].erase(it_erase);
-    
 }
 
 
 //returne ThreadID from a string
 int util::getTid(std::string op)
 {
-    
     int posBegin = (int)op.find_first_of("-", op.find_first_of("-") + 1)+1;
-    while(op.at(posBegin) == '>'){
+    while(op.at(posBegin) == '>')
         posBegin = (int)op.find_first_of("-", posBegin) + 1;
-    }
+    
     //for read operations, we have to consider the readId as well
     int posEnd = (int)op.find_first_of("-", posBegin);
     int posEnd2 = (int)op.find_first_of("&", posBegin);
     if(posEnd != string::npos)
         return intValueOf(op.substr(posBegin, posEnd-posBegin));
+    
     return intValueOf( op.substr(posBegin, posEnd2-posBegin));
     
 }
 
-//transforms an int into a string
+//transforms a int into a string
 string util::stringValueOf(int i)
 {
     stringstream ss;

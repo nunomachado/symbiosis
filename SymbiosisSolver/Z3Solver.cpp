@@ -345,7 +345,7 @@ string Z3Solver::cAnd(string exp1, string exp2) {
 
 
 string Z3Solver::cAnd(string exp1){
-    return "(and "+exp1+")";
+    return "(and "+exp1+ ")";
 }
 
 string Z3Solver::cOr(string exp1, string exp2){

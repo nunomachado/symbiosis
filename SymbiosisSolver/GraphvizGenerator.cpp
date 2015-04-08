@@ -56,18 +56,17 @@ std::vector<std::string> operationsVars;    //vector containing the operation va
 std::vector<std::string> orderVars;         //vector containing the operation order variables
 int numOps;                             //number of operations to ordered
 
+
 /*
  * Returns a port name if the operation is involved in a dependence
  * in the failing schedule. Otherwise, returns empty string.
  */
 string getDependencePort(string op, string schType)
 {
-    // if(exclusiveFail.count(op))
-    //   return op;
     map<string,string> exclusiveAux;
-    if (schType=="fail") {
+    if (schType=="fail")
         exclusiveAux = exclusiveFail;
-    }
+    
     else
         exclusiveAux = exclusiveAlt;
     
@@ -76,6 +75,7 @@ string getDependencePort(string op, string schType)
     {
         if(!op.compare(it->first))
             return (util::stringValueOf(counter)+"1");
+        
         if(!op.compare(it->second))
             return (util::stringValueOf(counter)+"2");;
         
@@ -84,6 +84,7 @@ string getDependencePort(string op, string schType)
     
     return "";
 }
+
 
 /*
  * Replaces CHAR "specialChar" (unsupported by graphviz) to "htmlCode"
@@ -105,22 +106,19 @@ string changeChar2graphviz(string specialChar, string htmlCode ,string op){
 };
 
 
-/*
- *Remove line comments
- */
+
+// Remove line comments from an operation
 string removeComment(string op)
 {
     size_t pos = op.find("//");
     if(pos!= string::npos)
         op.resize(pos);
+    
     return op;
 }
 
 
-
-/*
- * Changes from the operation name the characters unsupported by graphviz
- */
+// Changes from the operation name the characters unsupported by graphviz
 string cleanOperation(string op)
 {
     op = removeComment(op);
@@ -131,87 +129,95 @@ string cleanOperation(string op)
 }
 
 
-//Retrive "SimpleAssertKLEE.c" from "[18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45"
-string  getFilenameOp(string op)
+/*
+ * return filename from an operation
+ *
+ * Example: Retrive "SimpleAssertKLEE.c" from "[18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45"
+ */
+string getFilenameOp(string op)
 {
     int filenameInitP = (int)op.find("&")+1;
     int filenameEndP = (int)op.find("@");
-    string fileNameOp = op.substr(filenameInitP,filenameEndP-filenameInitP);
-    return fileNameOp;
-
+    return op.substr(filenameInitP,filenameEndP-filenameInitP);
 }
 
-//expecting something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45 to get "45"
-int  getLineOp(string op)
+
+/*
+ * return operation line in de source code
+ *
+ * Example: "45", expecting to receive something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45 
+ */
+int getLineOp(string op)
 {
     int lineInitP = (int)op.find("@")+1;
-    const char *cstr = op.substr(lineInitP,op.length()).c_str();
-    return (int)atoi(cstr);
+    return util::intValueOf(op.substr(lineInitP,op.length()));
 }
 
-//expecting something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45 to get "45"
+
+/*
+ * return operation variable id
+ *
+ * Example: "416680994", expecting to receive something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45
+ */
 int getVarIDlock(string op)
 {
     int initP = (int)op.find("_")+1;
     op = op.substr(initP,op.length());
     int endP = (int)op.find("-");
-    int varIDlock = (int)atoi(op.substr(0,endP).c_str());
-    return varIDlock;
+    return util::intValueOf(op.substr(0,endP));
 }
 
 
 
-
-//pthread_mutex_lock(&lock);
+/*
+ * return variable name from a code line
+ *
+ * Example: "&lock", from "pthread_mutex_lock(&lock);"
+ */
 string getVarNameFromCodeLine(string codeLine)
 {
     int init = (int)codeLine.find("(")+1;
     int end = (int)codeLine.find(")");
-    string varName = codeLine.substr(init,end-init);
-    return varName;
-
+    return codeLine.substr(init,end-init);
 }
 
 
-string getLockVarName(string filename, int line, int lockVarID)
+/*
+ * return variable name from source code
+ *
+ * Example: return "&lock", from fileName in line 43
+ */
+string getLockVarName(string filename, int line)
 {
     string codeLine = graphgen::getCodeLine(line, filename);
-    string lockVarName = getVarNameFromCodeLine(codeLine);
-    return lockVarName;
-    
-    
+    return getVarNameFromCodeLine(codeLine);
 }
 
 
-
-void storePair(int lockVarID,string lockVarName){
-
-    //lockVarName.erase( std::remove( lockVarName.begin(), lockVarName.end(),'&'), lockVarName.end() );
+// store a new pair<variable id, variable name>
+void storeLockPair(int lockVarID,string lockVarName)
+{
     lockVariables.insert(pair<int,string>(lockVarID,lockVarName));
-//    map<int,string> lockVariables; //map: lockID -> lockVariable
 }
 
 
-string getVarName(int varID){
+// get the variable name from a map using its id
+string getVarName(int varID)
+{
     return lockVariables[varID];
 }
 
-//Store a lockVarName with its ID
+
+// store a lockVarName with its ID
 void fillMaplockVariables(string op)
 {
     //expecting something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45
     string filename = getFilenameOp(op); // SimpleAssertKLEE.c
-    //cout << "\n\nFilename: "<< filename;
     int line = getLineOp(op);          //45
-      //  cout << "\nline: "<< line;
     int lockVarID = getVarIDlock(op);  //416680994
-        //cout << "\nvarID: "<< lockVarID;
-    string lockVarName = getLockVarName(filename,line,lockVarID);
-        //cout << "\nVarName: " << lockVarName;
-    storePair(lockVarID,lockVarName);
-
-    string aux = getVarName(lockVarID);
-    cout << "Map " << aux<< endl;
+    
+    string lockVarName = getLockVarName(filename,line);
+    storeLockPair(lockVarID,lockVarName);
 }
 
 
@@ -224,7 +230,7 @@ void fillMaplockVariables(string op)
  */
 void graphgen::genAllGraphSchedules(vector<string> failSchedule, map<EventPair, vector<string> > altSchedules)
 {
-    //** define colors
+    //** define thread colors
     threadColors["0"] = "salmon";
     threadColors["1"] = "lightsteelblue2";
     threadColors["1.1"] = "cyan4";
@@ -240,21 +246,18 @@ void graphgen::genAllGraphSchedules(vector<string> failSchedule, map<EventPair, 
     threadColors["10"] = "red";
     
     //** compute data-dependencies for failSchedule
-    //cout << "Failing schedule:\n";
     for(int oit = (int)failSchedule.size()-1; oit >= 0;oit--)
     {
         string opA = failSchedule[oit];
 
         //fill map lockVariables
-        if(opA.find("OS-lock")!= string::npos){
+        if(opA.find("OS-lock")!= string::npos)
             fillMaplockVariables(opA);
-        }
         
         if(opA.find("OR-") == string::npos)
             continue;
         
         string varA = util::parseVar(opA);
-        
         for(int iit = oit; iit >= 0; iit--)
         {
             string opB = failSchedule[iit];
@@ -265,9 +268,9 @@ void graphgen::genAllGraphSchedules(vector<string> failSchedule, map<EventPair, 
                 //cout << "   debug: varA " << varA << " == varB " << varB << "\n";
                 //cout << "   debug: " << opA << " <-- " << opB << "\n";
                 readDependFail[opA] = opB; //add dependence "A is data dependent on B"
-                if(writeDependFail.count(opB)){
+                if(writeDependFail.count(opB))
                     writeDependFail[opB].push_back(opA);
-                }
+            
                 else{
                     vector<string> tmpRs;
                     tmpRs.push_back(opA);
@@ -284,7 +287,6 @@ void graphgen::genAllGraphSchedules(vector<string> failSchedule, map<EventPair, 
     
     for(map<EventPair, vector<string> >::iterator it = altSchedules.begin(); it!=altSchedules.end(); ++it)
     {
-        //cout << "\n\nAlt schedule "<< pairToString(it->first, failSchedule);
         genGraphSchedule(failSchedule, it->first, it->second);
         altCounter++;
     }
@@ -292,10 +294,10 @@ void graphgen::genAllGraphSchedules(vector<string> failSchedule, map<EventPair, 
 
 
 
-//** compute data-dependencies for AltSchedule
+//** compute data-dependencies for Schedule
 void computeDataDependencies(vector<string> schedule){
 
-    for(int oit = schedule.size()-(float)1; oit >= 0;oit--)
+    for(int oit = (int)schedule.size()-1; oit >= 0; oit--)
     {
         string opA = schedule[oit];
         
@@ -347,7 +349,7 @@ bool isUnsatCoreOp(string varFail)
 //** schedule or in the alternate schedule)
 void computeExclusiveDependencies(vector<int>* exclusiveFailIds, vector<int>* exclusiveAltIds)
 {
-    for(map<string,string>::iterator dit = readDependFail.begin(); dit!=readDependFail.end();++dit)
+    for(map<string,string>::iterator dit = readDependFail.begin(); dit!=readDependFail.end(); ++dit)
     {
         string writeFail = dit->second;
         string varFail = util::parseVar(writeFail);
@@ -387,24 +389,15 @@ void computeExclusiveDependencies(vector<int>* exclusiveFailIds, vector<int>* ex
     //** sort ids in ascending order
     sort(exclusiveFailIds->begin(),exclusiveFailIds->end());
     sort(exclusiveAltIds->begin(),exclusiveAltIds->end());
-    
 }
 
 
-
-
-//adding adjacents locks and unlocks from an exclusiveSchID
+//adding adjacents locks and unlocks from an exclusive ScheduleID vector
 void addLockOp2Dependencies(vector<string>* schedule, ThreadSegment* tseg, int i, vector<int>* exclusiveSchIds)
 {
     if((*schedule)[i].find("lock_")!= string::npos)
-    {
-        string str = (*schedule)[i];
-        cout << str << endl;
         return ; // exit if is lock or unlock
-    }
-    string str = (*schedule)[i];
-    cout << str << endl;
-    
+   
     int j,k;
     for(j = i-1; j > 0; j--)
     {
@@ -465,27 +458,14 @@ vector<ThreadSegment> computeSegments(vector<string> schedule, vector<int>* excl
                     continue;
                 
                 tseg.hasDependencies = true;
-                //cout << "New dependencie " << (*exclusiveSchIds)[dit] << " " << schedule[dit] << " TID: " << tseg.tid << endl;
                 tseg.dependencies.push_back((*exclusiveSchIds)[dit]); // add new position to segment.dependencies
                 addLockOp2Dependencies(&schedule,&tseg,(*exclusiveSchIds)[dit], exclusiveSchIds);
 
             }
             //only add segments of relevant threads
-            if(relevantThreads.find(tseg.tid)!=relevantThreads.end()){
+            if(relevantThreads.find(tseg.tid)!=relevantThreads.end())
                 segsList.push_back(tseg);
-                
-                /*
-                for(vector<string>::iterator it = schedule.begin(); it < schedule.end(); it++)
-                {
-                    cout << (*it) << endl;
-                }
-                int z;
-                for(z = 0; z < tseg.dependencies.size(); z++)
-                {
-                    cout << "Dependencies:" <<tseg.dependencies[z] << endl;
-                }
-                */
-            }
+    
             prevTid = tid;
             initSeg = oit;
         }
@@ -513,13 +493,10 @@ vector<ThreadSegment> computeSegments(vector<string> schedule, vector<int>* excl
         tseg.hasDependencies = true;
         tseg.dependencies.push_back((*exclusiveSchIds)[dit]);
     }
-    if(relevantThreads.find(tseg.tid)!=relevantThreads.end()){
+    if(relevantThreads.find(tseg.tid)!=relevantThreads.end())
         segsList.push_back(tseg);
-    }
     return segsList;
 }
-
-
 
 
 //for each exclusive write in the alt schedule, add all data-dependencies from
@@ -598,9 +575,8 @@ void cutOffPrefix( vector<ThreadSegment>* segsFail, vector<ThreadSegment>* segsA
                         continue;
                 }
                 else if(asize > fsize && aseg.hasDependencies)
-                {
                     ait->markAtomic = true;
-                }
+                
                 //move forward in the failing segments and restart iterating over the alt segments
                 fit++;
                 ait = segsAlt->begin();
@@ -608,6 +584,7 @@ void cutOffPrefix( vector<ThreadSegment>* segsFail, vector<ThreadSegment>* segsA
         }
         if(fit==segsFail->end())
             break;
+        
         else
             fit++;
     }
@@ -676,6 +653,8 @@ void cutOffIdenticalEvents(vector<ThreadSegment>* segsFail, vector<ThreadSegment
 
 
 
+
+//present fail and alternative schedules in a graph in graphviz format
 void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, vector<string> altSchedule)
 {
     readDependAlt.clear();
@@ -722,6 +701,7 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
 }
 
 
+
 string getVarValue(string op)
 {
     for(map<string,string>::iterator it = solutionValues.begin(); it != solutionValues.end(); it++)
@@ -733,6 +713,8 @@ string getVarValue(string op)
 
 }
 
+
+//turn operation in a pretty line of code
 string makeInstrFriendly(string instruction){
 
     int filenameP =  (int)instruction.find("&");
@@ -744,9 +726,7 @@ string makeInstrFriendly(string instruction){
     
     string value = getVarValue(friendlyInstr);
     if (value != "")
-    {
         value = "       value " + value;
-    }
     
     if(string::npos != filenameP && string::npos != lineP){
         
@@ -767,7 +747,7 @@ string makeInstrFriendly(string instruction){
         string codeLine = graphgen::getCodeLine(line, filename);
         friendlyInstr = filename+" L"+codeLine;
     }
-    return friendlyInstr;// + value;
+    return friendlyInstr;
 }
 
 
@@ -784,6 +764,7 @@ string cleanInitSpacesOp(string ret)
     {
         if(isnumber(*itC))
             endNum++;
+        
         else
             break;
     }
@@ -806,7 +787,7 @@ string cleanInitSpacesOp(string ret)
 }
 
 
-//get operation from file
+//get operation from file using system call
 string graphgen::getCodeLine(int line, string filename)
 {
     numOps = 0;
@@ -819,7 +800,7 @@ string graphgen::getCodeLine(int line, string filename)
     lineCode_pid = util::popen2(command, &procW, &procR);
     if (!lineCode_pid)
     {
-        perror("Problems with getCodeLine pipe");
+        perror("Problems with getCodeLine pipe!");
         exit(1);
     }
     
@@ -835,30 +816,22 @@ string graphgen::getCodeLine(int line, string filename)
 }
 
 
-
-
-
 //checks if the segment contains the root cause, if in "fail" print table in red otherwise green
 bool containsBugCauseOp(ThreadSegment fseg, vector<string> sch, string bugCauseStr, string type)
 {
     string firstPart = bugCauseStr.substr(0, bugCauseStr.find(" should")-2);
-    //string secondPart = bugCauseStr.substr( bugCauseStr.find(" [")+2, bugCauseStr.find("..")- 1 - (bugCauseStr.find(" [")+1));
-    
     
     int i;
     for(i = fseg.initPos; i <= fseg.endPos; i++)
-    {
         if (sch[i].find(firstPart) != string::npos) // || sch[i].find(secondPart) != string::npos) Mark just the segment that contains the first part of the bug cause!
             return true;
-    }
+    
     return false;
 }
 
 
-
-
-//Draw header in graphvizFile
-void drawHeader(ofstream &outFile, string bugSolution, EventPair invPair, vector<string> failSchedule)
+// draw/write header in graphfiz format in file
+void drawHeader(ofstream &outFile, string bugSolution)
 {
     outFile << "digraph G {\n\tcenter=1;\n\tranksep=.25; size = \"7.5,10\";\n\tnode [shape=record]\n\n";
     outFile << "labelloc=top;\n";
@@ -867,7 +840,7 @@ void drawHeader(ofstream &outFile, string bugSolution, EventPair invPair, vector
 }
 
 
-
+// draw schedule segments from a given schedule, can be fail or alternate schedule
 void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<string> schedule, string schType, string bugSolution)
 {
     
@@ -895,20 +868,17 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
     {
         ThreadSegment seg = segsSch[i];
         outFile << nodeType << i << " [fontname=\"Helvetica\", fontsize=\"11\", shape=none, margin=0,\n";
-        if(containsBugCauseOp(seg, schedule, bugSolution, schType))//"fail"
-        {
+        if(containsBugCauseOp(seg, schedule, bugSolution, schType))
             outFile << "\tlabel=<<table border=\"2\" color=" + gridColor + " cellspacing=\"0\">\n";
-        }
         else
         {
-            if(schType!="fail"){
+            if(schType!="fail")
+            {
                 outFile << "\tlabel=<<table border=\"";
-                if(seg.markAtomic){
+                if(seg.markAtomic)
                     outFile << "4\" cellspacing=\"0\">\n";
-                }
-                else{
+                else
                     outFile << "0\" cellspacing=\"0\">\n";
-                }
             }
             else
                 outFile << "\tlabel=<<table border=\"0\" cellspacing=\"0\">\n";
@@ -936,22 +906,23 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
             string port = getDependencePort(op,schType);
             string friendlyOp = cleanOperation(makeInstrFriendly(op));
 
-            if(port.empty()){
+            if(port.empty())
+            {
                 if(friendlyOp == previousOp || (friendlyOp == friendlyOpNext && !(getDependencePort( nextOp, schType).empty()))) // jump write if 1) == previous, or 2) next operation is equal and specail (with a port)
-                {
                     continue;
-                }
                 else
                 {
                     outFile << "\t\t<tr><td align=\"left\" border=\"1\">" << friendlyOp<< "</td></tr>\n";
                     previousOp = friendlyOp;
                 }
             }
-            else{
+            else
+            {
                 outFile << "\t\t<tr><td align=\"left\" border=\"1\" port=\""<<port<<"\" bgcolor="+ colorBug+">" << friendlyOp << "</td></tr>\n";
                 opToPort[(nodeType+op)] = nodeType+util::stringValueOf(i)+":"+port+":e";
                 previousOp = friendlyOp;
             }
+            
             numEventsDifDebug++;
         }
         outFile << "\t</table>>\n]\n\n";
@@ -959,21 +930,20 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
     
     //** draw edges
     for(int i = 0; i < segsSch.size()-1; i++)
-    {
-        outFile << nodeType <<i<<" -> "<< nodeType << i+1 <<";\n";
-    }
+        outFile << nodeType << i <<" -> "<< nodeType << i+1 <<";\n";
     
     //** draw data-dependence edges
     for(map<string,string>::iterator it = exclusiveAux.begin(); it!=exclusiveAux.end(); ++it)
     {
-        outFile << opToPort[(nodeType + it->second)] << " -> " << opToPort[(nodeType + it->first)] << " [color="+ lineColor +", fontcolor="+ lineColor + ", style=bold, label=\"" << getVarValue(it->first) << "\"] ;\n\n\n" ;
+        outFile << opToPort[(nodeType + it->second)] <<" -> "<< opToPort[(nodeType + it->first)] <<" [color=" + lineColor
+        + ", fontcolor="+ lineColor + ", style=bold, label=\"" << getVarValue(it->first) << "\"] ;\n\n\n";
     }
 }
 
 
 
 /*
- * Draws the graphviz file for a given failing schedule and alternate schedule
+ * Draw failing schedule and alternate schedule in graphviz format
  *
  */
 void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment> segsAlt, vector<string> failSchedule, vector<string> altSchedule, EventPair invPair)
@@ -985,10 +955,13 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
     
     if(appname.find("solution")!=string::npos)
         appname.erase(appname.find("solution"),8); //try to parse app name for files
+    
     if(appname.find("ALT")!=string::npos)
         appname.erase(appname.find("ALT"),3);
+    
     if(appname.find(".txt")!=string::npos)
         appname.erase(appname.find(".txt"));
+    
     path.append("/DSP/dsp_"+appname+"_Alt"+util::stringValueOf(altCounter)+".gv");
     
     outFile.open(path, ios::trunc);
@@ -1004,7 +977,7 @@ void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment
     string previousOp = "", nextOp = "";
 
     //draw file header
-    drawHeader(outFile, bugSolution, invPair, failSchedule);
+    drawHeader(outFile, bugSolution);
     
     //drawAllSegments
     drawAllSegments(outFile, segsFail, failSchedule, "fail", bugSolution);

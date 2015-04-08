@@ -186,8 +186,7 @@ void PathOperation::setExpression(string exp){
     expr = exp;
 }
 
-void PathOperation::print()
-{
+void PathOperation::print(){
     cout << "[" << threadId << "]: " << expr << endl;
 }
 

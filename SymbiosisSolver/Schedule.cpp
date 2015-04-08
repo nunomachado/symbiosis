@@ -14,48 +14,45 @@
 using namespace std;
 
 
-//Print Schedule using OrderConstraintName
-void scheduleLIB::printSch(Schedule sch){
+//print Schedule
+void scheduleLIB::printSch(Schedule sch)
+{
     int i = 0 ;
     cout << "Schedule size: " << sch.size()<< endl;
-    cout << "Schedule contextSwitches: " << getContextSwitchNum(sch)<< endl;
+    cout << "Schedule contextSwitches: " << getContextSwitchNum(sch) << endl;
    
-    
-    
     for(Schedule ::iterator it = sch.begin(); it != sch.end(); ++it) {
         int strID = util::intValueOf((*it)->getThreadId());
         string tabs = util::threadTabsPP(strID);
-        
         cout << tabs <<"["<< i <<"] ";//<<  (*it)->getThreadId();
         cout << (*it)->getOrderConstraintName() << endl;
         i++;
     }
-    cout << endl << endl;
+    cout << endl;
 }
 
 
-//return a non empty vector<string (operations)>
+//remove empty operations from vector<string (operations)>
 vector<string> cleanEmpty(vector<string> *globalOrderTmp)
 {
     vector<string> globalOrder;
-    for(int i = 0; i < globalOrderTmp->size(); i++){
+    for(int i = 0; i < globalOrderTmp->size(); i++)
+    {
         string op = (*globalOrderTmp)[i];
-        if(!op.empty()){
+        if(!op.empty())
             globalOrder.push_back(op);
-        }
     }
     return globalOrder;
 }
 
 
-
-//fill Schedule
+//load fail Schedule or if in fixmode load alternative
 void scheduleLIB::loadSchedule(vector<string> *globalOrderTmp)
 {
     map<string,vector<Operation*> > t2op = operationsByThread;
     //clean empty positions in globalOrder
     vector<string> globalOrder = cleanEmpty(globalOrderTmp);
-    Schedule scheduleTmp; //TODO isto deixou de fazer sentido pq temos estruturas diferentes para fail and altschedule
+    Schedule scheduleTmp;
     scheduleTmp.clear();
     scheduleTmp.reserve(globalOrder.size());
     
@@ -82,28 +79,25 @@ void scheduleLIB::loadSchedule(vector<string> *globalOrderTmp)
 }
 
 
-// transform a given schedule do a string's vector
+// transform a given schedule in a strings' vector
 std::vector<std::string> scheduleLIB::schedule2string(Schedule schedule)
 {
     vector<string> listOp;
     for(Schedule::iterator it= schedule.begin() ; it != schedule.end(); it ++)
-    {
         listOp.push_back((*it)->getOrderConstraintName());
-    }
     return listOp;
 }
 
 
-//saveSch2file
+//save a schedule to a file
 void scheduleLIB::saveScheduleFile(string filename, vector<string> listOp){
-    // open the output file to store the solution
+    
     string solConst;
     std::ofstream solFile;
-    
-    solFile.open(filename, ios::trunc);
+    solFile.open(filename, ios::trunc); // open the output file to store the solution
     if(!solFile.is_open())
     {
-        cerr << " -> Error opening file "<< formulaFile <<".\n";
+        cerr << " -> Error opening file " << formulaFile << ".\n";
         solFile.close();
         exit(0);
     }
@@ -113,18 +107,16 @@ void scheduleLIB::saveScheduleFile(string filename, vector<string> listOp){
     for(int i = 0; i < listOp.size()-1; i++)
     {
         string op = listOp[i];
-        
         //add solution constraint to
         solConst = "(assert (! (< "+listOp[i]+" "+listOp[i+1]+" ):named solution"+util::stringValueOf(labelsol)+"))\n";
         solFile << solConst;  //write to solution file
         labelsol++;
-        
     }
     solFile.close();
 }
 
 
-//return the number of context switches
+//return the number of context switches in a schedule
 int scheduleLIB::getContextSwitchNum(Schedule sch){
     int count = 0;
     string oldTid = sch[0]->getThreadId();
@@ -132,16 +124,14 @@ int scheduleLIB::getContextSwitchNum(Schedule sch){
     {
         string nextTid = (*(it+1))->getThreadId();
         if (nextTid != oldTid)
-        {
             count++;
-        }
         oldTid = nextTid;
     }
     return count;
 }
 
 
-//return the operation/action thread ID
+//return the operation thread ID
 string scheduleLIB::getTidOperation(Operation op)
 {
     return op.getThreadId();
@@ -152,22 +142,19 @@ string scheduleLIB::getTidOperation(Operation op)
 int scheduleLIB::getTEIsize(Schedule schedule, int initPosition)
 {
     string tid = getTidOperation(*schedule[initPosition]); //(schedule,initPosition);
-    //Schedule::iterator it = schedule.begin()+initPosition;
     int size = 1;
     
     //size incrementation until the thread ID of the next action is different
-    for(Schedule::iterator it = schedule.begin()+initPosition+1; it !=schedule.end(); it++){
+    for(Schedule::iterator it = schedule.begin()+initPosition+1; it != schedule.end(); it++){
         if (tid == getTidOperation(**it))
-        {
             size++;
-        }
-        else break; //it = schedule.end();
+        else break;
     }
     return size;
-    
 }
 
-//insert TEI in a schedule
+
+//insert TEI in a schedule in a given position
 Schedule scheduleLIB::insertTEI(Schedule schedule, int newPosition, Schedule tei)
 {
     Schedule::iterator newPositionIt = schedule.begin()+newPosition;
@@ -175,7 +162,8 @@ Schedule scheduleLIB::insertTEI(Schedule schedule, int newPosition, Schedule tei
     return schedule;
 }
 
-//removeTEI from a schedule
+
+//remove TEI from a schedule with a given position
 Schedule scheduleLIB::removeTEI(Schedule schedule, int initPosition)
 {
     int size = getTEIsize(schedule,initPosition);
@@ -189,15 +177,13 @@ Schedule scheduleLIB::getTEI(Schedule schedule, int startPostion){
     int size = getTEIsize(schedule, startPostion);
     
     //Schedule tei = schedule; if erase deletes the main struct
-    //erase TAIL
     Schedule::iterator it = schedule.begin();
-    schedule.erase(it+startPostion+size, schedule.end());
-    //erase HEAD
+    schedule.erase(it+startPostion+size, schedule.end());     //erase TAIL
     it = schedule.begin();
-    schedule.erase(it,it+startPostion);
-    
+    schedule.erase(it,it+startPostion);     //erase HEAD
     return schedule;
 }
+
 
 //change TEI block to another location (TEI - thread execution interval)
 Schedule scheduleLIB::moveTEISch(Schedule list,int newPositon, int oldPosition)
@@ -207,7 +193,7 @@ Schedule scheduleLIB::moveTEISch(Schedule list,int newPositon, int oldPosition)
 }
 
 
-//cheeck if action in a given position is the last one in its TEI
+//check if action in a given position is the last one in its TEI
 bool scheduleLIB::isLastActionTEI(Schedule sch, int pos)
 {
     string Tid = getTidOperation(*sch[pos]);
@@ -243,18 +229,17 @@ vector<string> scheduleLIB::getSolutionStr(Schedule schedule){
     vector<string> actionsList;
     int i=0 ;
     int size = 0 ;
-    cout << size << "\n" ;
+    cout << size << endl;
     for(Schedule::iterator it = schedule.begin(); it != schedule.end(); it++)
     {
-        //cout << i << " Solution: " << (*it)->getOrderConstraintName() << endl;
         actionsList.push_back((*it)->getOrderConstraintName());
         i++;
-        
     }
     return actionsList;
 }
 
 
+// return a new valid Schedule with a shorter or equal solution using a moveUpTei algorithm
 Schedule scheduleLIB::moveUpTEI(Schedule schedule,ConstModelGen *cmgen, bool isReverse)
 {
     int i=0;
@@ -273,7 +258,7 @@ Schedule scheduleLIB::moveUpTEI(Schedule schedule,ConstModelGen *cmgen, bool isR
             if(prox != -1)
             {
                 currentSch = moveTEISch(currentSch,i,prox);
-                if(isReverse)
+                if(isReverse) //moveDownTEI uses also this function but with isReverse=true
                 {
                     reverseSch = currentSch;
                     reverse(reverseSch.begin(),reverseSch.end());
@@ -294,6 +279,7 @@ Schedule scheduleLIB::moveUpTEI(Schedule schedule,ConstModelGen *cmgen, bool isR
 }
 
 
+// return a new valid schedule with a shorter or equal using a reverse moveUpTei algorithm
 Schedule scheduleLIB::moveDownTEI(Schedule schedule, ConstModelGen *cmgen)
 {
     reverse(schedule.begin(),schedule.end());
@@ -306,33 +292,34 @@ Schedule scheduleLIB::moveDownTEI(Schedule schedule, ConstModelGen *cmgen)
 }
 
 
+
+// return a new valid schedule with a shorter or equal using moveUpTei and moveDownTei algorithms
 Schedule scheduleLIB::scheduleSimplify(Schedule schedule, ConstModelGen *cmgen)
 {
     Schedule currentSch = schedule;
     Schedule oldSch = schedule;
     bool continueS = true ;
     int count = 0;
+    bool notReverse = false;
     while(continueS)
     {
         //removeLastTEI
-        //NOT IMPLEMENTED
+        //### NOT IMPLEMENTED ###
         
         //move-Up-TEI
-        bool notReverse = false;
         currentSch = scheduleLIB::moveUpTEI(currentSch, cmgen, notReverse);
         
         //move-Down-TEI
-        currentSch = scheduleLIB::moveDownTEI(currentSch, cmgen);
+        currentSch = scheduleLIB::moveDownTEI(currentSch, cmgen); //calls moveUpTEI but with NotReverse = true!
         
         if(getContextSwitchNum(currentSch) < getContextSwitchNum(oldSch))
         {
             oldSch = currentSch;    //simplification continues
             count++;
-            cout << count << " simplifications" << endl;
+            cout << count << " simplifications." << endl;
         }
         else
-            continueS = false; //no effect simplification, exit cycle.
-        
+            continueS = false; //simplification without effect, exit cycle.
     }
     return oldSch;
 }

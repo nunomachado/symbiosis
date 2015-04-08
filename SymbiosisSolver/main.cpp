@@ -122,7 +122,7 @@ void parse_args(int argc, char *const* argv)
                 bugFixMode = true;
                 break;
             case 'u':
-                dspFlag = optarg; // extended, short 
+                dspFlag = optarg; // extended, short, can be also empty
                 break;
                 
             /*case 'r':
@@ -145,6 +145,12 @@ void parse_args(int argc, char *const* argv)
         while (optind < argc)
             printf ("%s ", argv[optind++]);
         putchar ('\n');
+        exit(1);
+    }
+    
+    if(bugFixMode && dspFlag!="extended" && dspFlag!="short" && dspFlag!="")
+    {
+        cerr << "Unknow argument for --dsp\nUsage: --dsp=\"extended\", \"short\" or \"\" to have different DSP views\n";
         exit(1);
     }
     

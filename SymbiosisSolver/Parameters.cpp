@@ -20,7 +20,7 @@ std::string formulaFile = "";
 std::string solutionFile = "";
 std::string assertThread = "";
 std::string sourceFilePath = "";
-std::string dspFlag = "";       //define which view the user wants in the result
+std::string dspFlag = "";
 
 bool failedExec = false;
 
