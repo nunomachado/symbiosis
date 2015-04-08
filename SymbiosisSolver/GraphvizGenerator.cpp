@@ -687,13 +687,12 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
      */
     computeDataDependencies(altSchedule);
     
-    //** compute exclusive dependencies (i.e. dependencies that appear only in the failing
-    //** schedule or in the alternate schedule)
     vector<int> exclusiveFailIds;
     vector<int> exclusiveAltIds;
     exclusiveFail.clear();
     exclusiveAlt.clear();
-    computeExclusiveDependencies(&exclusiveFailIds, &exclusiveAltIds);
+    computeExclusiveDependencies(&exclusiveFailIds, &exclusiveAltIds); //(i.e. dependencies that appear only in the failing schedule or in the alternate schedule)
+    
     
     //for each exclusive write in the alt schedule, add all data-dependencies from
     //reads in the same thread of the exclusive read (i.e. mark all reads that are affected by that particular write
@@ -715,7 +714,7 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
     cutOffPrefix( &segsFail, &segsAlt, &failSchedule, &altSchedule);
 
     //new - cutoff identical events within thread segments (this is not optimized, as it could have been done in the previous cycle..)
-        cutOffIdenticalEvents(&segsFail, &segsAlt, &failSchedule, &altSchedule);
+    cutOffIdenticalEvents(&segsFail, &segsAlt, &failSchedule, &altSchedule);
     }
     
     //draw graphviz file
