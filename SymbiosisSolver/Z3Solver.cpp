@@ -201,7 +201,7 @@ bool Z3Solver::checkSat()
     {
         double solvingTime = difftime(endTime, startTime);//(double)(endTime-startTime)/(double) CLOCKS_PER_SEC;
         cout << "[Solver] Solution found in "<< solvingTime<<"s:\n\n";
-        scheduleLIB::loadSchedule(&globalOrderTmp); // can be failScheduleOrd or altScheduleOrd depending on the boolean flag bugFixMode
+        scheduleLIB::loadSchedule(globalOrderTmp); // can be failScheduleOrd or altScheduleOrd depending on the boolean flag bugFixMode
     }
     
     

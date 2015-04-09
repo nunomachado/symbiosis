@@ -15,13 +15,13 @@ using namespace std;
 
 
 //print Schedule
-void scheduleLIB::printSch(Schedule sch)
+void scheduleLIB::printSch(const Schedule& sch)
 {
     int i = 0 ;
     cout << "Schedule size: " << sch.size()<< endl;
     cout << "Schedule contextSwitches: " << getContextSwitchNum(sch) << endl;
    
-    for(Schedule ::iterator it = sch.begin(); it != sch.end(); ++it) {
+    for(Schedule ::const_iterator it = sch.begin(); it != sch.end(); ++it) {
         int strID = util::intValueOf((*it)->getThreadId());
         string tabs = util::threadTabsPP(strID);
         cout << tabs <<"["<< i <<"] ";//<<  (*it)->getThreadId();
@@ -33,12 +33,12 @@ void scheduleLIB::printSch(Schedule sch)
 
 
 //remove empty operations from vector<string (operations)>
-vector<string> cleanEmpty(vector<string> *globalOrderTmp)
+vector<string> cleanEmpty(const vector<string>& globalOrderTmp)
 {
     vector<string> globalOrder;
-    for(int i = 0; i < globalOrderTmp->size(); i++)
+    for(int i = 0; i < globalOrderTmp.size(); i++)
     {
-        string op = (*globalOrderTmp)[i];
+        string op = globalOrderTmp[i];
         if(!op.empty())
             globalOrder.push_back(op);
     }
@@ -47,7 +47,7 @@ vector<string> cleanEmpty(vector<string> *globalOrderTmp)
 
 
 //load fail Schedule or if in fixmode load alternative
-void scheduleLIB::loadSchedule(vector<string> *globalOrderTmp)
+void scheduleLIB::loadSchedule(const vector<string>& globalOrderTmp)
 {
     map<string,vector<Operation*> > t2op = operationsByThread;
     //clean empty positions in globalOrder
@@ -73,9 +73,7 @@ void scheduleLIB::loadSchedule(vector<string> *globalOrderTmp)
         failScheduleOrd = scheduleTmp;
     }
     else
-    {
         altScheduleOrd = globalOrder;
-    }
 }
 
 
