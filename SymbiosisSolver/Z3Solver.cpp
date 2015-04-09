@@ -96,10 +96,6 @@ string Z3Solver::readLinePipe()
 }
 
 
-
-
-
-//
 string getOpDefinition(string line)
 {
     int posBegin = (int)line.find("(define-fun ") + 12;  //place posBegin in the first char of the order operation
@@ -107,8 +103,6 @@ string getOpDefinition(string line)
     
     return line.substr(posBegin, posEnd-posBegin);
 }
-
-
 
 
 /*

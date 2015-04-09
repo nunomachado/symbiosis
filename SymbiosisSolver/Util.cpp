@@ -24,7 +24,7 @@
 
 using namespace std;
 
-//write map values from a file
+//write map values to a file
 void util::saveVarValues2File(std::string filename, std::map<std::string, std::string> mapValues)
 {
     ofstream outFile;
@@ -61,9 +61,7 @@ std::map<std::string, std::string> util::loadVarValuesFromFile(std::string filen
         mapValues.insert(pair<string,string>(first_var,second_value));
     }
     inSol.close();
-    return mapValues;
-    
-}
+    return mapValues;}
 
 
 

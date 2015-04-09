@@ -393,24 +393,24 @@ void computeExclusiveDependencies(vector<int>* exclusiveFailIds, vector<int>* ex
 
 
 //adding adjacents locks and unlocks from an exclusive ScheduleID vector
-void addLockOp2Dependencies(vector<string>* schedule, ThreadSegment* tseg, int i, vector<int>* exclusiveSchIds)
+void addLockOp2Dependencies(const vector<string>& schedule, ThreadSegment* tseg, int i, vector<int>* exclusiveSchIds)
 {
-    if((*schedule)[i].find("lock_")!= string::npos)
+    if((schedule)[i].find("lock_")!= string::npos)
         return ; // exit if is lock or unlock
    
     int j,k;
     for(j = i-1; j > 0; j--)
     {
-        if((*schedule)[j].find("-lock_")!= string::npos)
+        if((schedule)[j].find("-lock_")!= string::npos)
         {
             (tseg->dependencies).push_back(j);
-            exclusiveSchIds->push_back(j); //add lock id to exclusive. No need for sort
-            for(k = i+1; k < schedule->size(); k++)
+            exclusiveSchIds->push_back(j); //add lock id to exclusive. No need to sort
+            for(k = i+1; k < schedule.size(); k++)
             {
-                if((*schedule)[k].find("-unlock_")!= string::npos)
+                if(schedule[k].find("-unlock_")!= string::npos)
                 {
                     (tseg->dependencies).push_back(k);
-                    exclusiveSchIds->push_back(k); //add unlock id to exclusive. No need for sort
+                    exclusiveSchIds->push_back(k); //add unlock id to exclusive. No need to sort
                     break; //found fst unlock
                 }
             }
@@ -420,58 +420,11 @@ void addLockOp2Dependencies(vector<string>* schedule, ThreadSegment* tseg, int i
 }
 
 
-
-// Compute thread segments for both schedules
-vector<ThreadSegment> computeSegments(vector<string> schedule, vector<int>* exclusiveSchIds)
+//Build segment struct from a schedule
+void computeSingleSegment(const vector<string>& schedule, vector<ThreadSegment>* segsList, vector<int>* exclusiveSchIds, int initSeg, int oit, string prevTid)
 {
-    vector<ThreadSegment> segsList;
-    string op = schedule[0];
-    string prevTid = util::parseThreadId(op); //indicates the last thread id observed
-    
-    int initSeg = 0;  //indicates the start of the current segment
     int dependIt = 0; //iterator for exclusiveFail/AltIds; allows to check if a given block encompasses operations with dependencies or not
     
-    int oit;
-    for(oit = 1; oit < schedule.size(); oit++)
-    {
-        op = schedule[oit];
-        string tid = util::parseThreadId(op);
-        
-        if(tid != prevTid)
-        {
-            ThreadSegment tseg;
-            tseg.initPos = initSeg;
-            tseg.endPos = oit-1; //the endPos is the last operation of the previous segment
-            tseg.markAtomic = false;
-            tseg.hasDependencies = false;
-            tseg.tid = prevTid;
-            
-            //check if the current block comprises operations with dependencies
-            for(int dit = dependIt; dit < exclusiveSchIds->size(); dit++) // check if there are exclusive operations (position) that compreend the segment borders (init and end)
-            {
-                dependIt = dit;
-                
-                if(tseg.endPos < (*exclusiveSchIds)[dit])
-                    break;
-                
-                if(tseg.initPos > (*exclusiveSchIds)[dit])
-                    continue;
-                
-                tseg.hasDependencies = true;
-                tseg.dependencies.push_back((*exclusiveSchIds)[dit]); // add new position to segment.dependencies
-                addLockOp2Dependencies(&schedule,&tseg,(*exclusiveSchIds)[dit], exclusiveSchIds);
-
-            }
-            //only add segments of relevant threads
-            if(relevantThreads.find(tseg.tid)!=relevantThreads.end())
-                segsList.push_back(tseg);
-    
-            prevTid = tid;
-            initSeg = oit;
-        }
-    }
-    
-    //** handle last case
     ThreadSegment tseg;
     tseg.initPos = initSeg;
     tseg.endPos = oit-1; //the endPos is the last operation of the previous segment
@@ -480,7 +433,7 @@ vector<ThreadSegment> computeSegments(vector<string> schedule, vector<int>* excl
     tseg.tid = prevTid;
     
     //check if the current block comprises operations with dependencies
-    for(int dit = dependIt; dit < exclusiveSchIds->size(); dit++)
+    for(int dit = dependIt; dit < exclusiveSchIds->size(); dit++) // check if there are exclusive operations (position) that compreend the segment borders (init and end)
     {
         dependIt = dit;
         
@@ -491,10 +444,42 @@ vector<ThreadSegment> computeSegments(vector<string> schedule, vector<int>* excl
             continue;
         
         tseg.hasDependencies = true;
-        tseg.dependencies.push_back((*exclusiveSchIds)[dit]);
+        tseg.dependencies.push_back((*exclusiveSchIds)[dit]); // add new position to segment.dependencies
+        addLockOp2Dependencies(schedule,&tseg,(*exclusiveSchIds)[dit], exclusiveSchIds); //add lock and unlock to seg.dependencies
+        
     }
+    //only add segments of relevant threads
     if(relevantThreads.find(tseg.tid)!=relevantThreads.end())
-        segsList.push_back(tseg);
+        segsList->push_back(tseg);
+    
+}
+
+
+// Compute thread segments for both schedules
+vector<ThreadSegment> computeSegments( const vector<string>& schedule, vector<int>* exclusiveSchIds)
+{
+    vector<ThreadSegment> segsList;
+    string op = schedule[0];
+    string prevTid = util::parseThreadId(op); //indicates the last thread id observed
+    
+    int initSeg = 0;  //indicates the start of the current segment
+    
+    int oit;
+    for(oit = 1; oit < schedule.size(); oit++)
+    {
+        op = schedule[oit];
+        string tid = util::parseThreadId(op);
+        
+        if(tid != prevTid)
+        {
+            computeSingleSegment(schedule, &segsList, exclusiveSchIds, initSeg, oit, prevTid);
+            prevTid = tid;
+            initSeg = oit;
+        }
+    }
+    //** handle last case
+    computeSingleSegment(schedule, &segsList, exclusiveSchIds, initSeg, oit, prevTid);
+    
     return segsList;
 }
 
@@ -946,7 +931,7 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
  * Draw failing schedule and alternate schedule in graphviz format
  *
  */
-void graphgen::drawGraphviz(vector<ThreadSegment> segsFail, vector<ThreadSegment> segsAlt, vector<string> failSchedule, vector<string> altSchedule, EventPair invPair)
+void graphgen::drawGraphviz(const vector<ThreadSegment>& segsFail, const vector<ThreadSegment>& segsAlt, const vector<string>& failSchedule, const vector<string>& altSchedule, const EventPair& invPair)
 {
     ofstream outFile;
     
