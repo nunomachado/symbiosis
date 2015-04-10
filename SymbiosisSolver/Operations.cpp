@@ -31,6 +31,12 @@ Operation::Operation(string tid, string variable, int varid, int srcline, string
     filename = f;
 }
 
+Operation::Operation(string tid, int idOp)
+{
+    threadId = tid;
+    id = idOp;
+};
+
 string Operation::getThreadId(){
     return threadId;
 }
@@ -85,6 +91,36 @@ string Operation::getConstraintName()
 {
     return ("Op-" + var + "-" + threadId);
 }
+
+//** class CallOperation ***************
+CallOperation::CallOperation() : Operation(){};
+
+CallOperation::CallOperation(string tid, int id, int scrLine, int destLine, string scrFilename, string destFilename)
+: Operation(tid, id)
+{
+    _srcLine = scrLine;
+    _destLine = destLine;
+    _srcFilename = scrFilename;
+    _destFilename = destFilename;
+}
+
+ //string CallOperation::getConstraintName();
+std::string CallOperation::getOrderConstraintName()
+{
+    string ret = "OC-FunCall-" + threadId + "-" + util::stringValueOf(id) + "&"+ _srcFilename +";"+ _destFilename +"@" + util::stringValueOf(_srcLine) + ";" + util::stringValueOf(_destLine);
+    return ret;
+}
+
+void CallOperation::print()
+{
+    string varList="";
+    for(map<string, string>::iterator it = _bindingPair.begin(); it != _bindingPair.end(); it++)
+    {
+        varList = varList + (*it).first +" to "+(*it).second+" ";
+    }
+    cout << "[" << threadId << "] " << "_" << varList << "-" << id << "&" << _srcFilename <<";"<< _destFilename << "@" << _srcLine <<";"<<_destLine<< endl;
+}
+
 
 //** class RWOperation ***************
 RWOperation::RWOperation() : Operation(){}

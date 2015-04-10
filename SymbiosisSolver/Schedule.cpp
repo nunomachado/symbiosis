@@ -78,17 +78,17 @@ void scheduleLIB::loadSchedule(const vector<string>& globalOrderTmp)
 
 
 // transform a given schedule in a strings' vector
-std::vector<std::string> scheduleLIB::schedule2string(Schedule schedule)
+std::vector<std::string> scheduleLIB::schedule2string(const Schedule& schedule)
 {
     vector<string> listOp;
-    for(Schedule::iterator it= schedule.begin() ; it != schedule.end(); it ++)
+    for(Schedule::const_iterator it = schedule.begin() ; it != schedule.end(); it ++)
         listOp.push_back((*it)->getOrderConstraintName());
     return listOp;
 }
 
 
 //save a schedule to a file
-void scheduleLIB::saveScheduleFile(string filename, vector<string> listOp){
+void scheduleLIB::saveScheduleFile(string filename, const vector<string>& listOp){
     
     string solConst;
     std::ofstream solFile;
@@ -115,10 +115,10 @@ void scheduleLIB::saveScheduleFile(string filename, vector<string> listOp){
 
 
 //return the number of context switches in a schedule
-int scheduleLIB::getContextSwitchNum(Schedule sch){
+int scheduleLIB::getContextSwitchNum(const Schedule& sch){
     int count = 0;
     string oldTid = sch[0]->getThreadId();
-    for(Schedule::iterator it = sch.begin(); it != sch.end()-1; it++)
+    for(Schedule::const_iterator it = sch.begin(); it != sch.end()-1; it++)
     {
         string nextTid = (*(it+1))->getThreadId();
         if (nextTid != oldTid)

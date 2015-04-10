@@ -16,16 +16,16 @@
 
 namespace scheduleLIB{
 
-    int getContextSwitchNum(Schedule sch);     //return the number of context switches
+    int getContextSwitchNum(const Schedule& sch);     //return the number of context switches
     void printSch (const Schedule& sch);     //Print Schedule using OrderConstraintName
-    void saveScheduleFile(std::string filename, std::vector<std::string> listOperation);  //save a given operation's vector and store it in a given filename
+    void saveScheduleFile(std::string filename, const std::vector<std::string>& listOperation);  //save a given operation's vector and store it in a given filename
     void loadSchedule(const std::vector<std::string>& globalOrderTmp); //fill failScheduleOrd and altScheduleOrd
     std::string getTidOperation(Operation op);     //return the operation/action thread ID
     int getTEIsize(Schedule schedule, int initPosition);     // receive TID start position and return TID size with the
     bool isLastActionTEI(Schedule sch, int pos);    //cheeck if action in a given position is the last one in its TEI
     int hasNextTEI(Schedule sch, int pos);     //return next action positon within the same thread: < 0 false | >= 0 next action position
     
-    std::vector<std::string> schedule2string(Schedule schedule); // transform a given schedule do a string's vector
+    std::vector<std::string> schedule2string(const Schedule& schedule); // transform a given schedule do a string's vector
     std::vector<std::string> getSolutionStr(Schedule schedule);  //create a string vector of actions, e.i. used in solver.
     
     Schedule insertTEI(Schedule schedule, int newPosition, Schedule tei); //insert TEI in a schedule

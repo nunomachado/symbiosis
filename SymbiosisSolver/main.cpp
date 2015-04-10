@@ -195,6 +195,7 @@ void parse_constraints(string symbFilePath)
     string obj;
     string var;
     int varId;
+    int callCounter = 0;
     
     map<string, int> varIdCounters; //map var name -> int counter to uniquely identify the i-th similar operation
     map<string, int> reentrantLocks; //map lock obj -> counter of reentrant acquisitions (used to differentiate reentrant acquisitions of the same lock)
@@ -220,7 +221,7 @@ void parse_constraints(string symbFilePath)
 		fin.getline(buf, MAX_LINE_SIZE); 
         char* token;
         string event = buf;
-        
+        //cout << "-> "<< event << endl;
         switch (buf[0]) {
             case '<':
                 token = strtok (buf,"<>");
@@ -365,9 +366,35 @@ void parse_constraints(string symbFilePath)
                 filename = token;
                 token = strtok (NULL,"-:");
                 line = atoi(token);
-                token = strtok (NULL,"-:"); //token = type (S,R, or W)
                 
-                if(!strcmp(token,"S"))  //handle sync constraints
+                token = strtok (NULL,"-:"); //token = type (S,R, or W)
+                //########## HEAD
+                if(!strcmp(token,"CS"))
+                {
+                    callCounter++;
+                    varId = callCounter;
+                    
+                    token = strtok (NULL,"-\n");
+                    threadId = token;
+                    string scrFilename = filename;
+ 
+                    int scrLine = line;
+                    
+                    //Get CodeDestiny
+                    fin.getline(buf, MAX_LINE_SIZE);
+                    //char* token2;
+                    string event = buf;
+                    
+                    token = strtok(buf,"@");
+                    string destFilename = token;
+                    token = strtok(NULL,"-:");
+                    int destLine = atoi(token);
+                    
+                    CallOperation* op = new CallOperation(threadId, varId, scrLine, destLine, scrFilename, destFilename);
+                    
+                    operationsByThread[threadId].push_back(op);
+                }
+                else if(!strcmp(token,"S"))  //handle sync constraints
                 {
                     token = strtok (NULL,"-_");
                     syncType = token;
