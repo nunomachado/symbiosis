@@ -367,7 +367,8 @@ void parse_constraints(string symbFilePath)
                 token = strtok (NULL,"-:");
                 line = atoi(token);
                 
-                token = strtok (NULL,"-:"); //token = type (S,R, or W)
+                token = strtok (NULL,"-:"); //token = type (S,R, or W, CS)
+                
                 //########## HEAD
                 if(!strcmp(token,"CS"))
                 {

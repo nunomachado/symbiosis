@@ -254,7 +254,7 @@ bool Z3Solver::solveWithSolution(vector<string> solution, bool invertBugCond)
             string newcond = line.substr(0,init) + " (= false "+cond+")" + line.substr(end);
             
             write(procW, newcond.c_str(), newcond.length());
-            if(debug) cout << newcond.c_str();
+            //if(debug) cout << newcond.c_str();
             
             //** store the operations in the bug condition into 'bugCondOps'
             init = cond.find_first_of("RW");
@@ -276,16 +276,16 @@ bool Z3Solver::solveWithSolution(vector<string> solution, bool invertBugCond)
                 {
                     string solConst = "(assert (! (< "+solution[i]+" "+solution[i+1]+" ):named solution"+util::stringValueOf(i)+"))\n";
                     write(procW, solConst.c_str(), solConst.length());
-                    if(debug) cout << solConst.c_str();
+                    //if(debug) cout << solConst.c_str();
                 }
             }
             write(procW, line.c_str(), line.length());
-            if(debug) cout << line.c_str();
+            //if(debug) cout << line.c_str();
         }
         else
         {
             write(procW, line.c_str(), line.length());
-            if(debug) cout << line.c_str();
+            //if(debug) cout << line.c_str();
         }
     }
     startTime = time(NULL);

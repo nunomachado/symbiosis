@@ -686,6 +686,71 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
 }
 
 
+void Tokenize(const string& str,
+              vector<string>& tokens,
+              const string& delimiters = " ")
+{
+    // Skip delimiters at beginning.
+    string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+    // Find first "non-delimiter".
+    string::size_type pos     = str.find_first_of(delimiters, lastPos);
+    
+    while (string::npos != pos || string::npos != lastPos)
+    {
+        // Found a token, add it to the vector.
+        tokens.push_back(str.substr(lastPos, pos - lastPos));
+        // Skip delimiters.  Note the "not_of"
+        lastPos = str.find_first_not_of(delimiters, pos);
+        // Find next "non-delimiter"
+        pos = str.find_first_of(delimiters, lastPos);
+    }
+}
+
+
+vector<string> splitVars(string vars)
+{
+    vector<string> varList;
+    Tokenize(vars, varList,",");
+    return varList;
+    
+}
+
+
+//string scrLine = "bounded_buf_init(&buffer, 3);";
+vector<string> getVarCall(string lineC)
+{
+    vector<string> varList;
+    int startP = (int)lineC.find("(")+1;
+    int endP = (int)lineC.find(")");
+    string vars = lineC.substr(startP,endP- startP);
+    varList = splitVars(vars);
+    
+    return varList;
+}
+
+
+//string destLine = "int bounded_buf_init(bounded_buf_t * bbuf, size_t sz)";
+vector<string> getVarSignature(string lineC)
+{
+    vector<string> listVarsType;
+    vector<string> vectorPair;
+    vector<string> listVars;
+    
+    
+    int startP = (int)lineC.find("(")+1;
+    int endP = (int)lineC.find(")");
+    string vars = lineC.substr(startP,endP- startP);
+    
+    Tokenize(vars, listVarsType,",");
+    for(vector<string>::iterator it = listVarsType.begin(); it != listVarsType.end(); it++)
+    {
+        vectorPair.clear();
+        Tokenize((*it),vectorPair," ");
+        listVars.push_back(vectorPair[vectorPair.size()-1]);
+    }
+    return listVars;
+}
+
 
 string getVarValue(string op)
 {
@@ -698,34 +763,88 @@ string getVarValue(string op)
 
 }
 
+string getVarBind(string srcLine, string destLine)
+{
+    
+    vector<string> varListCall = getVarCall(srcLine);
+    vector<string> varListSign = getVarSignature(destLine);
+    if (varListSign.size() != varListCall.size())
+    {
+        cerr << "Error when binding variables, different sizes" << endl;
+        exit(0);
+    }
+    string bindBuff = "[ ";
+    int i;
+    for(i=0; i < varListCall.size(); i++)
+        bindBuff = bindBuff + varListCall[i] + " to " + varListSign[i] + " ";
+
+    bindBuff = bindBuff + "]";
+    cout << bindBuff << endl ;
+    return bindBuff;
+}
+
+
+
+//return a friendly string with parameters binding
+string getFunCallFriendlyOp(string instrCall)
+{//OC-FunCall-0-1&boundedBufferKLEE.c_boundedBufferKLEE.c@350_41
+    vector<string> filesLines;
+    Tokenize(instrCall,filesLines,"&@");
+    vector<string> files;
+    Tokenize(filesLines[1],files,"_");
+    vector<string> lines;
+    Tokenize(filesLines[2],lines,"_");
+    string filenameScr = files[0];
+    string filenameDest = files[1];
+    int lineSrc = util::intValueOf(lines[0]);
+    int lineDest = util::intValueOf(lines[1]);
+    
+    string srcOp = graphgen::getCodeLine(lineSrc, filenameScr);
+    system("someMagic!");
+    string destOp = graphgen::getCodeLine(lineDest, filenameDest);
+    
+    if (srcOp == "" ||  destOp == "")
+    {
+        cerr << "Error when binding variables, str = empty" << endl;
+        cerr << "func call: "<< srcOp << "!" << endl;
+        cerr << "func signature: " << destOp << "!" << endl;
+        exit(0);
+    }
+    
+    string vars = getVarBind(srcOp, destOp);
+    return vars;
+}
 
 //turn operation in a pretty line of code
 string makeInstrFriendly(string instruction){
+
+    if (instruction.find("OC-FunCall-") != string::npos)
+        return getFunCallFriendlyOp(instruction);
 
     int filenameP =  (int)instruction.find("&");
     int lineP =      (int)instruction.find("@");
     int isOSlock = (int)instruction.find("OS-lock");
     int isOSunlock = (int)instruction.find("OS-unlock");
     string friendlyInstr = instruction;
-    
+    cout << friendlyInstr << endl;
     
     string value = getVarValue(friendlyInstr);
     if (value != "")
         value = "       value " + value;
-    
-    if(string::npos != filenameP && string::npos != lineP){
         
+    if(string::npos != filenameP && string::npos != lineP)
+    {
         string filename = getFilenameOp(friendlyInstr);
         int line = getLineOp(friendlyInstr);
         
-        if (string::npos != isOSlock || string::npos != isOSunlock) {
-            
+        if (string::npos != isOSlock || string::npos != isOSunlock)
+        {
             int varID = getVarIDlock(friendlyInstr);
             string lockVarName = getVarName(varID);
             string lockStr = " lock(";
-            if (string::npos != isOSunlock) {
+            if (string::npos != isOSunlock)
                 lockStr = " unlock(";
-            }
+           
             friendlyInstr = filename + " L"+ to_string(line) + lockStr + lockVarName+");";
             return friendlyInstr;
         }
@@ -741,6 +860,9 @@ string makeInstrFriendly(string instruction){
 //remove special caracteres and white spaces between line number and operation
 string cleanInitSpacesOp(string ret)
 {
+    if(ret == "")
+        return "";
+    
     ret = ret.substr(ret.find_first_of("1234567890")); //remove de /x01 caracter
     
     //find line number and store it in lineN
@@ -764,7 +886,7 @@ string cleanInitSpacesOp(string ret)
         else
             break;
     }
-    string strOp = ret.substr(initCode,ret.size());
+    string strOp = ret.substr(initCode);
 
     //built pretty line + operation
     ret = lineN + " " + strOp;
@@ -797,7 +919,10 @@ string graphgen::getCodeLine(int line, string filename)
         ret = ret + c[0];
         read(procR,c,1);
     }
-    return cleanInitSpacesOp(ret); //remove special caracteres and white spaces between line number and operation
+    if(ret.find("(")==string::npos || ret.find(")") == string::npos )
+        return getCodeLine(line-1, filename);
+    string op = cleanInitSpacesOp(ret);
+    return op;  //remove special caracteres and white spaces between line number and operation
 }
 
 
