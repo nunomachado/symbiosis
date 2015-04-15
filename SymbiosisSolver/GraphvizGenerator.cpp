@@ -395,28 +395,32 @@ void computeExclusiveDependencies(vector<int>* exclusiveFailIds, vector<int>* ex
 //adding adjacents locks and unlocks from an exclusive ScheduleID vector
 void addLockOp2Dependencies(const vector<string>& schedule, ThreadSegment* tseg, int i, vector<int>* exclusiveSchIds)
 {
-    if((schedule)[i].find("lock_")!= string::npos)
-        return ; // exit if is lock or unlock
-   
     int j,k;
-    for(j = i-1; j > 0; j--)
+    //find potential wrapping locking region
+    for(j = i-1; j > tseg->initPos; j--)
     {
-        if((schedule)[j].find("-lock_")!= string::npos)
-        {
+        if(schedule[j].find("unlock")!= string::npos){
+            break;
+        }
+        else if(schedule[j].find("lock")!= string::npos){
+            //cout << "addlockdependcies: "<< schedule[j] << endl;
+            
             (tseg->dependencies).push_back(j);
-            exclusiveSchIds->push_back(j); //add lock id to exclusive. No need to sort
+            exclusiveSchIds->push_back(j); //add lock id to exclusive
+            
+            //we've found a lock; find the corresponding unlock
             for(k = i+1; k < schedule.size(); k++)
             {
-                if(schedule[k].find("-unlock_")!= string::npos)
-                {
+                if(schedule[k].find("unlock")!= string::npos){
+                    //cout << "addlockdependcies: "<< schedule[k] << endl;
                     (tseg->dependencies).push_back(k);
-                    exclusiveSchIds->push_back(k); //add unlock id to exclusive. No need to sort
-                    break; //found fst unlock
+                    exclusiveSchIds->push_back(k); //add unlock id to exclusive
+                    break; //found corresponding unlock
                 }
             }
-            break; //found fst lock
         }
     }
+    
 }
 
 
@@ -615,6 +619,38 @@ void cutOffIdenticalEvents(vector<ThreadSegment>* segsFail, vector<ThreadSegment
                         ait->initPos++;
                         fOp = (*failSchedule)[fit->initPos];
                         aOp = (*altSchedule)[ait->initPos];
+                    }
+                }
+                
+                //prune common suffix within the segments, until operations are different or one of them has a dependency
+                fOp = (*failSchedule)[fit->endPos]; //last operation of the fail segment
+                aOp = (*altSchedule)[ait->endPos]; //last operation of the alt segment
+                
+                if(fOp == aOp){
+                    bool isDependency = false;
+                    while(fOp == aOp && !isDependency)
+                    {
+                        //check whether the head operations are involved in a dependency or not; stop pruning if so
+                        for(vector<int>::iterator tmpit = fit->dependencies.begin(); tmpit != fit->dependencies.end(); ++tmpit){
+                            if(fit->endPos == *tmpit){
+                                isDependency = true;
+                                break;
+                            }
+                        }
+                        
+                        for(vector<int>::iterator tmpit = ait->dependencies.begin(); tmpit != ait->dependencies.end() && !isDependency; ++tmpit){
+                            if(ait->endPos == *tmpit){
+                                isDependency = true;
+                                break;
+                            }
+                        }
+                        
+                        if(!isDependency){
+                            fit->endPos--;
+                            ait->endPos--;
+                            fOp = (*failSchedule)[fit->endPos];
+                            aOp = (*altSchedule)[ait->endPos];
+                        }
                     }
                 }
                 
@@ -826,7 +862,7 @@ string makeInstrFriendly(string instruction){
     int isOSlock = (int)instruction.find("OS-lock");
     int isOSunlock = (int)instruction.find("OS-unlock");
     string friendlyInstr = instruction;
-    cout << friendlyInstr << endl;
+    //cout << friendlyInstr << endl;
     
     string value = getVarValue(friendlyInstr);
     if (value != "")
