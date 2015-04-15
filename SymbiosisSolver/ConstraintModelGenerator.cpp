@@ -388,6 +388,11 @@ void ConstModelGen::addLockingConstraints(map<string, vector<LockPairOperation> 
                 }
                 // ----- end of optimization
                 
+                //if there are no remaning locks to generate constraints continue to next locking pair
+                if(lockpairPrime.size() == 0){
+                    continue;
+                }
+                
                 numLO = numLO + 1 + 2*lockpairPrime.size(); //account for constraints Oal > Oau' && Oal'' > Oau || Oau'' < Oal'
                 string globalOr = "";
                 string firstAnd = "";
