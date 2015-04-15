@@ -828,6 +828,7 @@ void drawHeader(ofstream &outFile, string bugSolution)
 // draw schedule segments from a given schedule, can be fail or alternate schedule
 void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<string> schedule, string schType, string bugSolution)
 {
+    numEventsDifDebug = 0;
     
     map<string,string> opToPort; //for a given operation, indicates its port label of form "tableId:port"
     string nextOp ="", previousOp ="";
@@ -848,7 +849,7 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
         gridColor = "\"darkgreen\"";
     }
     
-    //** draw all segments for the alternate schedule
+    //** draw all segments for the schedule
     for(int i = 0; i < segsSch.size(); i++)
     {
         ThreadSegment seg = segsSch[i];
@@ -873,27 +874,25 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
         for(int j = seg.initPos; j <= seg.endPos; j++)
         {
             string op = schedule[j];
+            
+            //we don't want to print the failure and exit operations
+            if(op.find("Assert")!=string::npos
+               || op.find("exit")!=string::npos){
+                continue;
+            }
+            
             if(j < seg.endPos-1)
             {
                 nextOp = schedule[j+1];
                 friendlyOpNext = cleanOperation(makeInstrFriendly(nextOp));
             }
-            if(schType!="fail")
-            {
-                //we don't want to print the failure operation in alt schedules
-                if(op.find("FAILURE")!=string::npos){
-                    if(seg.endPos-seg.initPos == 0) //replace FAILURE for exit if block only contains one operation
-                        op.replace(3, 7, "exit");
-                    else
-                        continue;
-                }
-            }
+          
             string port = getDependencePort(op,schType);
             string friendlyOp = cleanOperation(makeInstrFriendly(op));
 
             if(port.empty())
             {
-                if(friendlyOp == previousOp || (friendlyOp == friendlyOpNext && !(getDependencePort( nextOp, schType).empty()))) // jump write if 1) == previous, or 2) next operation is equal and specail (with a port)
+                if(friendlyOp == previousOp || (friendlyOp == friendlyOpNext && !(getDependencePort( nextOp, schType).empty()))) // jump write if 1) == previous, or 2) next operation is equal and special (with a port)
                     continue;
                 else
                 {
