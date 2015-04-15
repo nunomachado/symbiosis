@@ -225,9 +225,7 @@ int scheduleLIB::hasNextTEI(Schedule sch, int pos)
 //create a string vector of actions, e.i. used in solver.
 vector<string> scheduleLIB::getSolutionStr(Schedule schedule){
     vector<string> actionsList;
-    int i=0 ;
-    int size = 0 ;
-    cout << size << endl;
+    int i = 0;
     for(Schedule::iterator it = schedule.begin(); it != schedule.end(); it++)
     {
         actionsList.push_back((*it)->getOrderConstraintName());
