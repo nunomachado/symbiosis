@@ -820,13 +820,17 @@ string getVarBind(string srcLine, string destLine)
         cerr << "Error when binding variables, different sizes" << endl;
         exit(0);
     }
-    string bindBuff = "[ ";
+    string bindBuff = "( ";
+    string separator = " , ";
     int i;
     for(i=0; i < varListCall.size(); i++)
-        bindBuff = bindBuff + varListCall[i] + " to " + varListSign[i] + " ";
-    
-    bindBuff = bindBuff + "]";
-    cout << bindBuff << endl ;
+    {
+        if(i == varListCall.size()-1)
+            separator = "";
+        
+        bindBuff = bindBuff + varListCall[i] + " to " + varListSign[i] + separator;
+    }
+    bindBuff = bindBuff + " )";
     return bindBuff;
 }
 
