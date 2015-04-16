@@ -799,9 +799,15 @@ vector<string> getVarSignature(string lineC)
 }
 
 
-string getVarValue(string op)
+string getVarValue(string op, string schType)
 {
-    for(map<string,string>::iterator it = solutionValues.begin(); it != solutionValues.end(); it++)
+    map<string,string> solution;
+    if(schType!="fail")
+        solution = solutionValuesAlt;
+    else
+        solution = solutionValuesFail;
+    
+    for(map<string,string>::const_iterator it = solution.begin(); it != solution.end(); it++)
     {
         if (op.find(it->first)!= string::npos)
             return it->second;
@@ -812,7 +818,6 @@ string getVarValue(string op)
 
 string getVarBind(string srcLine, string destLine)
 {
-    
     vector<string> varListCall = getVarCall(srcLine);
     vector<string> varListSign = getVarSignature(destLine);
     if (varListSign.size() != varListCall.size())
@@ -877,12 +882,7 @@ string makeInstrFriendly(string instruction){
     int isOSlock = (int)instruction.find("OS-lock");
     int isOSunlock = (int)instruction.find("OS-unlock");
     string friendlyInstr = instruction;
-    //cout << friendlyInstr << " -> ";
-    
-    string value = getVarValue(friendlyInstr);
-    if (value != "")
-        value = "       value " + value;
-    
+   
     if(string::npos != filenameP && string::npos != lineP)
     {
         string filename = getFilenameOp(friendlyInstr);
@@ -1067,19 +1067,18 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
         for(int j = seg.initPos; j <= seg.endPos; j++)
         {
             string op = schedule[j];
-            
+            cout << op << endl;
             //we don't want to print the failure and exit operations
-            if(op.find("Assert")!=string::npos
-               || op.find("exit")!=string::npos){
+            int finalPositionOp = (int) op.find("&");
+            if(op.substr(0,finalPositionOp).find ("Assert")!=string::npos // a problem occurred when e.g.: the filename was "simpleAssert"
+               || op.substr(0,finalPositionOp).find("exit")!=string::npos){
                 continue;
             }
-            
             if(j < seg.endPos-1)
             {
                 nextOp = schedule[j+1];
                 friendlyOpNext = cleanOperation(makeInstrFriendly(nextOp));
             }
-            
             string port = getDependencePort(op,schType);
             string friendlyOp = cleanOperation(makeInstrFriendly(op));
             
@@ -1110,10 +1109,10 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
         outFile << nodeType << i <<" -> "<< nodeType << i+1 <<";\n";
     
     //** draw data-dependence edges
-    for(map<string,string>::iterator it = exclusiveAux.begin(); it!=exclusiveAux.end(); ++it)
+    for(map<string,string>::const_iterator it = exclusiveAux.begin(); it!=exclusiveAux.end(); ++it)
     {
         outFile << opToPort[(nodeType + it->second)] <<" -> "<< opToPort[(nodeType + it->first)] <<" [color=" + lineColor
-        + ", fontcolor="+ lineColor + ", style=bold, label=\"" << getVarValue(it->first) << "\"] ;\n\n\n";
+        + ", fontcolor="+ lineColor + ", style=bold, label=\"" << getVarValue(it->first, schType) << "\"] ;\n\n\n";
     }
 }
 
@@ -1162,4 +1161,21 @@ void graphgen::drawGraphviz(const vector<ThreadSegment>& segsFail, const vector<
     
     outFile << "}\n";
     outFile.close();
+}
+
+
+void graphgen::drawAllGraph(const map<EventPair, vector<string>>& altSchedules, const vector<string>& solution)
+{
+    
+    //** compute data dependencies
+    cout << "=======================================\n";
+    cout << "DATA DEPENDENCIES: \n\n";
+    graphgen::genAllGraphSchedules(solution, altSchedules);
+    cout << "=======================================\n";
+    cout << "STATISTICS: \n";
+    cout << "\n#Events in the full failing schedule: " << solution.size();
+    cout << "\n#Events in the unsat core: " << unsatCore.size();
+    cout << "\n#Events in the diff-debug schedule: " << numEventsDifDebug;
+    cout << "\n#Data-dependencies in the full failing schedule: " << numDepFull;
+    cout << "\n#Data-dependencies in the diff-debug schedule: " << numDepDifDebug << endl;
 }

@@ -1394,10 +1394,9 @@ vector<string> generateNewSchedule(EventPair invPair)
  *  the new model is sat, then it means that we found the root cause.
  *  Otherwise, simply attempt with another pair.
  */
-void findBugRootCause()
+bool findBugRootCause(map<EventPair, vector<string>>* altSchedules, vector<string>* solutionRetriver)
 {
     map<string, int> mapOpToId; //map: operation name -> id in 'solution' array
-    map<EventPair, vector<string> > altSchedules; //set used to store the event pairs that yield a sat non-failing alternative schedule
     bool success= false; //indicates whether we have found a bug-avoiding schedule
     int numAttempts = 0; //counts the number of attempts to find a sat alternate schedule
     
@@ -1492,7 +1491,7 @@ void findBugRootCause()
         {
             cout << "\n>> FOUND BUG AVOIDING SCHEDULE:\n" << bugCauseToString(invPair, solution);
             //altSchedules[invPair] = bugCore;
-            altSchedules[invPair] = newSchedule;
+            (*altSchedules)[invPair] = newSchedule;
             break;
         }
     }
@@ -1546,37 +1545,22 @@ void findBugRootCause()
             {
                 cout << "\n>> FOUND BUG AVOIDING SCHEDULE:\n" << bugCauseToString(invPair, solution);
                 //altSchedules[invPair] = bugCore;
-                altSchedules[invPair] = newSchedule;
+                (*altSchedules)[invPair] = newSchedule;
                 break;
             }
         }
     }
-    
-    //print data-dependencies and stats only when Symbiosis has found an alternate schedule
-    if(success)
-    {
-        //** compute data dependencies
-        cout << "=======================================\n";
-        cout << "DATA DEPENDENCIES: \n\n";
-        
-        graphgen::genAllGraphSchedules(solution,altSchedules);
-        
-        cout << "=======================================\n";
-        cout << "STATISTICS: \n";
-        cout << "\n#Events in the full failing schedule: " << solution.size();
-        cout << "\n#Events in the unsat core: " << unsatCore.size();
-        cout << "\n#Events in the diff-debug schedule: " << numEventsDifDebug;
-        cout << "\n#Data-dependencies in the full failing schedule: " << numDepFull;
-        cout << "\n#Data-dependencies in the diff-debug schedule: " << numDepDifDebug << endl;
-    }
-    
+    *solutionRetriver = solution;
+    return success;
 }
-
 
 
 int main(int argc, char *const* argv)
 {
     parse_args(argc, argv);
+    
+    map<EventPair, vector<string> > altSchedules; //set used to store the event pairs that yield a sat non-failing alternative schedule
+    vector<string> solution ;
     if(!bugFixMode)
     {
         //parse_avisoTrace();
@@ -1591,15 +1575,20 @@ int main(int argc, char *const* argv)
     else
     {
         //load variable values from file
-        solutionValues = util::loadVarValuesFromFile(sourceFilePath+"Values.txt");
+        solutionValuesFail = util::loadVarValuesFromFile(sourceFilePath+"Values.txt");
         
         //findBug
-        findBugRootCause();
+        bool success = findBugRootCause(&altSchedules, &solution);
         
+        //print data-dependencies and stats only when Symbiosis has found an alternate schedule
+        if(success)
+        {
+            solutionValuesAlt = solutionValues;
+            graphgen::drawAllGraph(altSchedules, solution);
+        }
         //save solution schedule
         solutionFile.insert(solutionFile.find(".txt"),"ALT");
         scheduleLIB::saveScheduleFile(solutionFile,altScheduleOrd);
     }
     return 0;
 }
-
