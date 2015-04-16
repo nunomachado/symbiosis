@@ -159,7 +159,7 @@ int getLineOp(string op)
  *
  * Example: "416680994", expecting to receive something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45
  */
-int getVarIDlock(string op)
+int getVarID(string op)
 {
     int initP = (int)op.find("_")+1;
     op = op.substr(initP,op.length());
@@ -214,7 +214,7 @@ void fillMaplockVariables(string op)
     //expecting something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45
     string filename = getFilenameOp(op); // SimpleAssertKLEE.c
     int line = getLineOp(op);          //45
-    int lockVarID = getVarIDlock(op);  //416680994
+    int lockVarID = getVarID(op);  //416680994
     
     string lockVarName = getLockVarName(filename,line);
     storeLockPair(lockVarID,lockVarName);
@@ -888,16 +888,16 @@ string getFunCallFriendlyOp(string instrCall)
     vector<string> filesLines;
     Tokenize(instrCall,filesLines,"&@");
     vector<string> files;
-    Tokenize(filesLines[1],files,"_");
+    Tokenize(filesLines[1],files,"/");
     vector<string> lines;
-    Tokenize(filesLines[2],lines,"_");
+    Tokenize(filesLines[2],lines,"/");
     string filenameScr = files[0];
     string filenameDest = files[1];
     int lineSrc = util::intValueOf(lines[0]);
     int lineDest = util::intValueOf(lines[1]);
     
     string srcOp = graphgen::getCodeLine(lineSrc, filenameScr, "call");
-    sleep(10);  //system("someMagic!");
+    sleep(1);  //system("someMagic!");
     string destOp = graphgen::getCodeLine(lineDest, filenameDest,"signature");
     
     if (srcOp == "" ||  destOp == "")
@@ -907,9 +907,11 @@ string getFunCallFriendlyOp(string instrCall)
         cerr << "func signature: " << destOp << "!" << endl;
         exit(0);
     }
-    
+    //"54  \tvoid StringBuffer::getChars(int srcBegin, int srcEnd,char *dst, int dstBegin) {"
+    string funcCall = graphgen::cleanRight(destOp);
+    funcCall = funcCall.substr(0,funcCall.find("(")-1);
     string vars = getVarBind(srcOp, destOp);
-    return vars;
+    return funcCall + vars;
 }
 
 //turn operation in a pretty line of code
@@ -931,7 +933,7 @@ string makeInstrFriendly(string instruction){
         
         if (string::npos != isOSlock || string::npos != isOSunlock)
         {
-            int varID = getVarIDlock(friendlyInstr);
+            int varID = getVarID(friendlyInstr);
             string lockVarName = getVarName(varID);
             string lockStr = " lock(";
             if (string::npos != isOSunlock)
@@ -957,7 +959,7 @@ string cleanInitSpacesOp(string ret)
         return "";
     
      //for some reason (probably to allow flushing the buffer read from the grep process), this is necessary to avoid misreading the line
-    sleep(10);
+    sleep(1);
     
     ret = ret.substr(ret.find_first_of("1234567890")); //remove de /x01 caracter
     
@@ -1003,6 +1005,31 @@ string cleanInitSpacesOp(string ret)
 }
 
 
+string look4LineWith(string token, int line, string filename)
+{
+    string signature = graphgen::getCodeLine(line, filename,"");
+    if(signature.find(token) == string::npos)
+        return look4LineWith(token, line-1, filename);
+    
+    return signature;
+}
+
+string graphgen::cleanRight(string op)
+{//"    55\t                            char *dst, int dstBegin) {"
+    int i = 0;
+    string cleanStr = "";
+    string x = op;
+    for (i = 0 ; i < op.size()-1; i++)
+    {
+        char c = op[i];
+        if(isalpha(c))
+            break;
+    }
+    cleanStr = op.substr(i);
+    return cleanStr;
+}
+
+
 //get operation from file using system call
 string graphgen::getCodeLine(int line, string filename, string type)
 {
@@ -1030,8 +1057,12 @@ string graphgen::getCodeLine(int line, string filename, string type)
     }
     
     if(type == "signature")
-        if(ret.find("(")==string::npos || ret.find(")") == string::npos )
+    {
+        if(ret.find(")")==string::npos)
             return getCodeLine(line-1, filename, "signature");
+        else if (ret.find("(")==string::npos)
+            ret = look4LineWith("(", line-1,filename) + cleanRight(ret) ;
+    }
     
     string op = cleanInitSpacesOp(ret);
     return op;  //remove special caracteres and white spaces between line number and operation

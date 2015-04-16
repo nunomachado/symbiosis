@@ -84,7 +84,6 @@ void parse_args(int argc, char *const* argv)
         
         c = getopt_long(argc, argv, "", long_options, &option_index);
         
-        
         /* Detect the end of the options. */
         if (c == -1)
             break;
@@ -290,7 +289,7 @@ void parse_constraints(string symbFilePath)
                 }
                 else
                 {
-                    cout << tmp << endl;
+                    //cout << tmp << endl;
                     tmp.erase(0,1); //erase first '$'
                     string value = "";
                     while(tmp.back() != '$')
