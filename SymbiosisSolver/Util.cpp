@@ -36,13 +36,13 @@ void util::saveVarValues2File(std::string filename, std::map<std::string, std::s
         exit(0);
     }
     cout << "Saving Map Structure to file: " << filename << "\n";
-
+    
     for(map<string,string>::iterator it= mapValues.begin(); it!= mapValues.end();it++)
     {
         outFile << it->first << endl;
         outFile << it->second << endl;
     }    outFile.close();
-
+    
 }
 
 //read map values from a file
@@ -88,23 +88,6 @@ void util::fillScheduleOrd(string tid, map<string,vector<Operation*>>* op_list, 
     (*op_list)[tid].erase(it_erase);
 }
 
-
-//returne ThreadID from a string
-int util::getTid(std::string op)
-{
-    int posBegin = (int)op.find_first_of("-", op.find_first_of("-") + 1)+1;
-    while(op.at(posBegin) == '>')
-        posBegin = (int)op.find_first_of("-", posBegin) + 1;
-    
-    //for read operations, we have to consider the readId as well
-    int posEnd = (int)op.find_first_of("-", posBegin);
-    int posEnd2 = (int)op.find_first_of("&", posBegin);
-    if(posEnd != string::npos)
-        return intValueOf(op.substr(posBegin, posEnd-posBegin));
-    
-    return intValueOf( op.substr(posBegin, posEnd2-posBegin));
-    
-}
 
 //transforms a int into a string
 string util::stringValueOf(int i)
@@ -250,21 +233,39 @@ bool util::isClosedExpression(string expr)
 
 std::string util::parseThreadId(std::string op)
 {
-    size_t init, end;
-    end = op.find_last_of("-");
-    init = op.find_last_of("-",end-1)+1;
-    string tid = op.substr(init,end-init);
+    int posBegin = (int)op.find_first_of("-", op.find_first_of("-") + 1)+1;
+    while(op.at(posBegin) == '>')
+        posBegin = (int)op.find_first_of("-", posBegin) + 1;
     
-    //account for operations without variable id
-    if(tid.length() > 3)
-    {
-        end = op.find_first_of("&");
-        init = op.find_last_of("-")+1;
-        tid = op.substr(init,end-init);
-    }
+    //for read operations, we have to consider the readId as well
+    int posEnd = (int)op.find_first_of("-", posBegin);
+    int posEnd2 = (int)op.find_first_of("&", posBegin);
+    if(posEnd != string::npos)
+        return op.substr(posBegin, posEnd-posBegin);
     
-    return tid;
+    return op.substr(posBegin, posEnd2-posBegin);
+    
 }
+
+/*
+ //returne ThreadID from a string
+ string util::getTid(std::string op)
+ {
+ size_t init, end;
+ end = op.find_last_of("-");
+ init = op.find_last_of("-",end-1)+1;
+ string tid = op.substr(init,end-init);
+ 
+ //account for operations without variable id
+ if(tid.length() > 3)
+ {
+ end = op.find_first_of("&");
+ init = op.find_last_of("-")+1;
+ tid = op.substr(init,end-init);
+ }
+ 
+ return tid;
+ }*/
 
 std::string util::parseVar(std::string op)
 {
@@ -275,7 +276,7 @@ std::string util::parseVar(std::string op)
     end = op.find_first_of("-",init);
     var = op.substr(init,end-init);
     //cout << "1: " << var << endl;
-   
+    
     //for JPF, the address might be the same for different variables (?), so we have to parse the var name as well
     //naive way of checking whether we are in jpfmode: count the length of the var
     if(var.length() < 4)
@@ -285,9 +286,9 @@ std::string util::parseVar(std::string op)
         end = op.find_first_of("-",init);
         //** uncomment this in order not to parse the var id
         /*end = op.find_first_of("_",init);
-        if(init == end){
-            end = op.find_first_of("_",init+1);
-        }*/
+         if(init == end){
+         end = op.find_first_of("_",init+1);
+         }*/
         
         var = op.substr(init,end-init);
     }
