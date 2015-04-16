@@ -914,7 +914,7 @@ string getFunCallFriendlyOp(string instrCall)
 
 //turn operation in a pretty line of code
 string makeInstrFriendly(string instruction){
-    return instruction;
+
     if (instruction.find("OC-FunCall-") != string::npos)
         return getFunCallFriendlyOp(instruction);
     
