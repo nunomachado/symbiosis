@@ -683,7 +683,45 @@ void cutOffIdenticalEvents(vector<ThreadSegment>* segsFail, vector<ThreadSegment
 }
 
 
-
+//cuts out the segments containing only one operation, which is irrelevant to the DSP (e.g. exit or AssertFail)
+void cutOffOrphans( vector<ThreadSegment>* segsFail, vector<ThreadSegment>* segsAlt, vector<string>* failSchedule, vector<string>* altSchedule)
+{
+    vector<ThreadSegment>::iterator fit = segsFail->begin();
+    while(fit != segsFail->end())
+    {
+        if(fit->initPos == fit->endPos){
+            string op = (*failSchedule)[fit->initPos];
+            
+            //we don't want to print the failure and exit operations
+            if(op.find("Assert")!=string::npos
+               || op.find("exit")!=string::npos){
+               fit = segsFail->erase(fit);
+            }
+            else
+                fit++;
+        }
+        else
+            fit++;
+    }
+    
+    fit = segsAlt->begin();
+    while(fit != segsAlt->end())
+    {
+        if(fit->initPos == fit->endPos){
+            string op = (*altSchedule)[fit->initPos];
+            
+            //we don't want to print the failure and exit operations
+            if(op.find("Assert")!=string::npos
+               || op.find("exit")!=string::npos){
+                fit = segsAlt->erase(fit);
+            }
+            else
+                fit++;
+        }
+        else
+            fit++;
+    }
+}
 
 
 //present fail and alternative schedules in a graph in graphviz format
@@ -726,6 +764,9 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
         
         //new - cutoff identical events within thread segments (this is not optimized, as it could have been done in the previous cycle..)
         cutOffIdenticalEvents(&segsFail, &segsAlt, &failSchedule, &altSchedule);
+        
+        //cut out orphan segments (i.e. that contain only irrelevant operations to the DSP)
+        cutOffOrphans(&segsFail, &segsAlt, &failSchedule, &altSchedule);
     }
     
     //draw graphviz file
@@ -873,7 +914,7 @@ string getFunCallFriendlyOp(string instrCall)
 
 //turn operation in a pretty line of code
 string makeInstrFriendly(string instruction){
-    
+    return instruction;
     if (instruction.find("OC-FunCall-") != string::npos)
         return getFunCallFriendlyOp(instruction);
     
@@ -914,6 +955,9 @@ string cleanInitSpacesOp(string ret)
 {
     if(ret == "")
         return "";
+    
+     //for some reason (probably to allow flushing the buffer read from the grep process), this is necessary to avoid misreading the line
+    sleep(10);
     
     ret = ret.substr(ret.find_first_of("1234567890")); //remove de /x01 caracter
     
@@ -1046,6 +1090,7 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
     for(int i = 0; i < segsSch.size(); i++)
     {
         ThreadSegment seg = segsSch[i];
+        
         outFile << nodeType << i << " [fontname=\"Helvetica\", fontsize=\"11\", shape=none, margin=0,\n";
         if(containsBugCauseOp(seg, schedule, bugSolution, schType))
             outFile << "\tlabel=<<table border=\"2\" color=" + gridColor + " cellspacing=\"0\">\n";

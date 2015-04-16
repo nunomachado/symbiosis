@@ -17,13 +17,26 @@ using namespace std;
 //print Schedule
 void scheduleLIB::printSch(const Schedule& sch)
 {
-    int i = 0 ;
+    map<string,int> tabs;
+    int t = 0 ; //counter for the number of tabs
+    int i = 0; //global order iterator
     cout << "Schedule size: " << sch.size()<< endl;
     cout << "Schedule contextSwitches: " << getContextSwitchNum(sch) << endl;
    
     for(Schedule ::const_iterator it = sch.begin(); it != sch.end(); ++it) {
-        int strID = util::intValueOf((*it)->getThreadId());
-        string tabs = util::threadTabsPP(strID);
+        
+        //get the number of tabs for the thread id
+        int ntabs;
+        string tid = (*it)->getThreadId();
+        if(tabs.count(tid)){
+            ntabs = tabs[tid];
+        }
+        else{
+            tabs[tid] = t;
+            ntabs = t;
+            t++;
+        }
+        string tabs = util::threadTabsPP(ntabs);
         cout << tabs <<"["<< i <<"] ";//<<  (*it)->getThreadId();
         cout << (*it)->getOrderConstraintName() << endl;
         i++;
@@ -62,8 +75,7 @@ void scheduleLIB::loadSchedule(const vector<string>& globalOrderTmp)
         {
             string op = globalOrder[i];
             
-            int id = util::getTid(op);
-            string tid = util::stringValueOf(id);
+            string tid = util::parseThreadId(op);
             
             //fill failScheduleOrd
             util::fillScheduleOrd(tid, &t2op, &scheduleTmp);
