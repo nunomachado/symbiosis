@@ -24,6 +24,9 @@ std::string dspFlag = "";
 
 bool failedExec = false;
 
+
+std::map<std::string, std::string > solutionValuesFail;
+std::map<std::string, std::string > solutionValuesAlt;
 std::map<std::string,std::string> solutionValues;
 std::vector<Operation*> failScheduleOrd;
 std::vector<std::string> altScheduleOrd;

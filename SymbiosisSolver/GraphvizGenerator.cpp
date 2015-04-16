@@ -159,7 +159,7 @@ int getLineOp(string op)
  *
  * Example: "416680994", expecting to receive something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45
  */
-int getVarIDlock(string op)
+int getVarID(string op)
 {
     int initP = (int)op.find("_")+1;
     op = op.substr(initP,op.length());
@@ -189,7 +189,7 @@ string getVarNameFromCodeLine(string codeLine)
  */
 string getLockVarName(string filename, int line)
 {
-    string codeLine = graphgen::getCodeLine(line, filename);
+    string codeLine = graphgen::getCodeLine(line, filename,"lock");
     return getVarNameFromCodeLine(codeLine);
 }
 
@@ -214,7 +214,7 @@ void fillMaplockVariables(string op)
     //expecting something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45
     string filename = getFilenameOp(op); // SimpleAssertKLEE.c
     int line = getLineOp(op);          //45
-    int lockVarID = getVarIDlock(op);  //416680994
+    int lockVarID = getVarID(op);  //416680994
     
     string lockVarName = getLockVarName(filename,line);
     storeLockPair(lockVarID,lockVarName);
@@ -840,9 +840,15 @@ vector<string> getVarSignature(string lineC)
 }
 
 
-string getVarValue(string op)
+string getVarValue(string op, string schType)
 {
-    for(map<string,string>::iterator it = solutionValues.begin(); it != solutionValues.end(); it++)
+    map<string,string> solution;
+    if(schType!="fail")
+        solution = solutionValuesAlt;
+    else
+        solution = solutionValuesFail;
+    
+    for(map<string,string>::const_iterator it = solution.begin(); it != solution.end(); it++)
     {
         if (op.find(it->first)!= string::npos)
             return it->second;
@@ -853,7 +859,6 @@ string getVarValue(string op)
 
 string getVarBind(string srcLine, string destLine)
 {
-    
     vector<string> varListCall = getVarCall(srcLine);
     vector<string> varListSign = getVarSignature(destLine);
     if (varListSign.size() != varListCall.size())
@@ -861,13 +866,17 @@ string getVarBind(string srcLine, string destLine)
         cerr << "Error when binding variables, different sizes" << endl;
         exit(0);
     }
-    string bindBuff = "[ ";
+    string bindBuff = "( ";
+    string separator = " , ";
     int i;
     for(i=0; i < varListCall.size(); i++)
-        bindBuff = bindBuff + varListCall[i] + " to " + varListSign[i] + " ";
-    
-    bindBuff = bindBuff + "]";
-    cout << bindBuff << endl ;
+    {
+        if(i == varListCall.size()-1)
+            separator = "";
+        
+        bindBuff = bindBuff + varListCall[i] + " to " + varListSign[i] + separator;
+    }
+    bindBuff = bindBuff + " )";
     return bindBuff;
 }
 
@@ -879,17 +888,17 @@ string getFunCallFriendlyOp(string instrCall)
     vector<string> filesLines;
     Tokenize(instrCall,filesLines,"&@");
     vector<string> files;
-    Tokenize(filesLines[1],files,"_");
+    Tokenize(filesLines[1],files,"/");
     vector<string> lines;
-    Tokenize(filesLines[2],lines,"_");
+    Tokenize(filesLines[2],lines,"/");
     string filenameScr = files[0];
     string filenameDest = files[1];
     int lineSrc = util::intValueOf(lines[0]);
     int lineDest = util::intValueOf(lines[1]);
     
-    string srcOp = graphgen::getCodeLine(lineSrc, filenameScr);
-    system("someMagic!");
-    string destOp = graphgen::getCodeLine(lineDest, filenameDest);
+    string srcOp = graphgen::getCodeLine(lineSrc, filenameScr, "call");
+    sleep(1);  //system("someMagic!");
+    string destOp = graphgen::getCodeLine(lineDest, filenameDest,"signature");
     
     if (srcOp == "" ||  destOp == "")
     {
@@ -898,14 +907,16 @@ string getFunCallFriendlyOp(string instrCall)
         cerr << "func signature: " << destOp << "!" << endl;
         exit(0);
     }
-    
+    //"54  \tvoid StringBuffer::getChars(int srcBegin, int srcEnd,char *dst, int dstBegin) {"
+    string funcCall = graphgen::cleanRight(destOp);
+    funcCall = funcCall.substr(0,funcCall.find("(")-1);
     string vars = getVarBind(srcOp, destOp);
-    return vars;
+    return funcCall + vars;
 }
 
 //turn operation in a pretty line of code
 string makeInstrFriendly(string instruction){
-   
+    
     if (instruction.find("OC-FunCall-") != string::npos)
         return getFunCallFriendlyOp(instruction);
     
@@ -914,12 +925,7 @@ string makeInstrFriendly(string instruction){
     int isOSlock = (int)instruction.find("OS-lock");
     int isOSunlock = (int)instruction.find("OS-unlock");
     string friendlyInstr = instruction;
-    //cout << friendlyInstr << " -> ";
-    
-    string value = getVarValue(friendlyInstr);
-    if (value != "")
-        value = "       value " + value;
-    
+   
     if(string::npos != filenameP && string::npos != lineP)
     {
         string filename = getFilenameOp(friendlyInstr);
@@ -927,7 +933,7 @@ string makeInstrFriendly(string instruction){
         
         if (string::npos != isOSlock || string::npos != isOSunlock)
         {
-            int varID = getVarIDlock(friendlyInstr);
+            int varID = getVarID(friendlyInstr);
             string lockVarName = getVarName(varID);
             string lockStr = " lock(";
             if (string::npos != isOSunlock)
@@ -936,7 +942,7 @@ string makeInstrFriendly(string instruction){
             friendlyInstr = filename + " L"+ to_string(line) + lockStr + lockVarName+");";
             return friendlyInstr;
         }
-        string codeLine = graphgen::getCodeLine(line, filename);
+        string codeLine = graphgen::getCodeLine(line, filename, "");
         friendlyInstr = filename+" L"+codeLine;
     }
     //cout << friendlyInstr << endl;
@@ -953,7 +959,7 @@ string cleanInitSpacesOp(string ret)
         return "";
     
      //for some reason (probably to allow flushing the buffer read from the grep process), this is necessary to avoid misreading the line
-    sleep(10);
+    sleep(1);
     
     ret = ret.substr(ret.find_first_of("1234567890")); //remove de /x01 caracter
     
@@ -999,8 +1005,33 @@ string cleanInitSpacesOp(string ret)
 }
 
 
+string look4LineWith(string token, int line, string filename)
+{
+    string signature = graphgen::getCodeLine(line, filename,"");
+    if(signature.find(token) == string::npos)
+        return look4LineWith(token, line-1, filename);
+    
+    return signature;
+}
+
+string graphgen::cleanRight(string op)
+{//"    55\t                            char *dst, int dstBegin) {"
+    int i = 0;
+    string cleanStr = "";
+    string x = op;
+    for (i = 0 ; i < op.size()-1; i++)
+    {
+        char c = op[i];
+        if(isalpha(c))
+            break;
+    }
+    cleanStr = op.substr(i);
+    return cleanStr;
+}
+
+
 //get operation from file using system call
-string graphgen::getCodeLine(int line, string filename)
+string graphgen::getCodeLine(int line, string filename, string type)
 {
     numOps = 0;
     
@@ -1024,8 +1055,15 @@ string graphgen::getCodeLine(int line, string filename)
         ret = ret + c[0];
         read(procR,c,1);
     }
-    //if(ret.find("(")==string::npos || ret.find(")") == string::npos )
-      //  return getCodeLine(line-1, filename);
+    
+    if(type == "signature")
+    {
+        if(ret.find(")")==string::npos)
+            return getCodeLine(line-1, filename, "signature");
+        else if (ret.find("(")==string::npos)
+            ret = look4LineWith("(", line-1,filename) + cleanRight(ret) ;
+    }
+    
     string op = cleanInitSpacesOp(ret);
     return op;  //remove special caracteres and white spaces between line number and operation
 }
@@ -1105,19 +1143,18 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
         for(int j = seg.initPos; j <= seg.endPos; j++)
         {
             string op = schedule[j];
-            
+            cout << op << endl;
             //we don't want to print the failure and exit operations
-            if(op.find("Assert")!=string::npos
-               || op.find("exit")!=string::npos){
+            int finalPositionOp = (int) op.find("&");
+            if(op.substr(0,finalPositionOp).find ("Assert")!=string::npos // a problem occurred when e.g.: the filename was "simpleAssert"
+               || op.substr(0,finalPositionOp).find("exit")!=string::npos){
                 continue;
             }
-            
             if(j < seg.endPos-1)
             {
                 nextOp = schedule[j+1];
                 friendlyOpNext = cleanOperation(makeInstrFriendly(nextOp));
             }
-            
             string port = getDependencePort(op,schType);
             string friendlyOp = cleanOperation(makeInstrFriendly(op));
             
@@ -1148,10 +1185,10 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
         outFile << nodeType << i <<" -> "<< nodeType << i+1 <<";\n";
     
     //** draw data-dependence edges
-    for(map<string,string>::iterator it = exclusiveAux.begin(); it!=exclusiveAux.end(); ++it)
+    for(map<string,string>::const_iterator it = exclusiveAux.begin(); it!=exclusiveAux.end(); ++it)
     {
         outFile << opToPort[(nodeType + it->second)] <<" -> "<< opToPort[(nodeType + it->first)] <<" [color=" + lineColor
-        + ", fontcolor="+ lineColor + ", style=bold, label=\"" << getVarValue(it->first) << "\"] ;\n\n\n";
+        + ", fontcolor="+ lineColor + ", style=bold, label=\"" << getVarValue(it->first, schType) << "\"] ;\n\n\n";
     }
 }
 
@@ -1200,4 +1237,21 @@ void graphgen::drawGraphviz(const vector<ThreadSegment>& segsFail, const vector<
     
     outFile << "}\n";
     outFile.close();
+}
+
+
+void graphgen::drawAllGraph(const map<EventPair, vector<string>>& altSchedules, const vector<string>& solution)
+{
+    
+    //** compute data dependencies
+    cout << "=======================================\n";
+    cout << "DATA DEPENDENCIES: \n\n";
+    graphgen::genAllGraphSchedules(solution, altSchedules);
+    cout << "=======================================\n";
+    cout << "STATISTICS: \n";
+    cout << "\n#Events in the full failing schedule: " << solution.size();
+    cout << "\n#Events in the unsat core: " << unsatCore.size();
+    cout << "\n#Events in the diff-debug schedule: " << numEventsDifDebug;
+    cout << "\n#Data-dependencies in the full failing schedule: " << numDepFull;
+    cout << "\n#Data-dependencies in the diff-debug schedule: " << numDepDifDebug << endl;
 }
