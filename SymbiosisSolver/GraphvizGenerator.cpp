@@ -189,7 +189,7 @@ string getVarNameFromCodeLine(string codeLine)
  */
 string getLockVarName(string filename, int line)
 {
-    string codeLine = graphgen::getCodeLine(line, filename);
+    string codeLine = graphgen::getCodeLine(line, filename,"lock");
     return getVarNameFromCodeLine(codeLine);
 }
 
@@ -846,9 +846,9 @@ string getFunCallFriendlyOp(string instrCall)
     int lineSrc = util::intValueOf(lines[0]);
     int lineDest = util::intValueOf(lines[1]);
     
-    string srcOp = graphgen::getCodeLine(lineSrc, filenameScr);
-    system("someMagic!");
-    string destOp = graphgen::getCodeLine(lineDest, filenameDest);
+    string srcOp = graphgen::getCodeLine(lineSrc, filenameScr, "call");
+    sleep(10);  //system("someMagic!");
+    string destOp = graphgen::getCodeLine(lineDest, filenameDest,"signature");
     
     if (srcOp == "" ||  destOp == "")
     {
@@ -895,7 +895,7 @@ string makeInstrFriendly(string instruction){
             friendlyInstr = filename + " L"+ to_string(line) + lockStr + lockVarName+");";
             return friendlyInstr;
         }
-        string codeLine = graphgen::getCodeLine(line, filename);
+        string codeLine = graphgen::getCodeLine(line, filename, "");
         friendlyInstr = filename+" L"+codeLine;
     }
     //cout << friendlyInstr << endl;
@@ -956,7 +956,7 @@ string cleanInitSpacesOp(string ret)
 
 
 //get operation from file using system call
-string graphgen::getCodeLine(int line, string filename)
+string graphgen::getCodeLine(int line, string filename, string type)
 {
     numOps = 0;
     
@@ -980,8 +980,11 @@ string graphgen::getCodeLine(int line, string filename)
         ret = ret + c[0];
         read(procR,c,1);
     }
-    //if(ret.find("(")==string::npos || ret.find(")") == string::npos )
-      //  return getCodeLine(line-1, filename);
+    
+    if(type == "signature")
+        if(ret.find("(")==string::npos || ret.find(")") == string::npos )
+            return getCodeLine(line-1, filename, "signature");
+    
     string op = cleanInitSpacesOp(ret);
     return op;  //remove special caracteres and white spaces between line number and operation
 }

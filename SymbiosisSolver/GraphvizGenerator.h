@@ -16,7 +16,7 @@
 
 namespace graphgen{
     
-    std::string getCodeLine(int line, std::string finename);
+    std::string getCodeLine(int line, std::string finename, std::string type);
     void genAllGraphSchedules(std::vector<std::string> failSchedule, std::map<EventPair, std::vector<std::string> > altSchedules);
     void genGraphSchedule(std::vector<std::string> failSchedule, EventPair invPair, std::vector<std::string> altSchedule);
     void drawGraphviz(const std::vector<ThreadSegment>& segsFail, const std::vector<ThreadSegment>& segsAlt, const std::vector<std::string>& failSchedule, const std::vector<std::string>& altSchedule, const EventPair& invPair);
