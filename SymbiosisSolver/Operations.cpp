@@ -104,10 +104,14 @@ CallOperation::CallOperation(string tid, int id, int scrLine, int destLine, stri
     _destFilename = destFilename;
 }
 
- //string CallOperation::getConstraintName();
+string CallOperation::getConstraintName(){
+    string ret = "FunCall-" + threadId + "-" + util::stringValueOf(id) + "&"+ _srcFilename +"/"+ _destFilename +"@" + util::stringValueOf(_srcLine) + "/" + util::stringValueOf(_destLine);
+    return ret;
+}
+
 std::string CallOperation::getOrderConstraintName()
 {
-    string ret = "OC-FunCall-" + threadId + "-" + util::stringValueOf(id) + "&"+ _srcFilename +"_"+ _destFilename +"@" + util::stringValueOf(_srcLine) + "_" + util::stringValueOf(_destLine);
+    string ret = "OC-FunCall-" + threadId + "-" + util::stringValueOf(id) + "&"+ _srcFilename +"/"+ _destFilename +"@" + util::stringValueOf(_srcLine) + "/" + util::stringValueOf(_destLine);
     return ret;
 }
 
@@ -118,7 +122,7 @@ void CallOperation::print()
     {
         varList = varList + (*it).first +" to "+(*it).second+" ";
     }
-    cout << "[" << threadId << "] " << "-" << varList << "-" << id << "&" << _srcFilename <<"_"<< _destFilename << "@" << _srcLine <<"_"<<_destLine<< endl;
+    cout << "[" << threadId << "] " << "FunCall_" << varList << "-" << id << "&" << _srcFilename <<";"<< _destFilename << "@" << _srcLine <<";"<<_destLine<< endl;
 }
 
 

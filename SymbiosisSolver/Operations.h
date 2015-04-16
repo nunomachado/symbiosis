@@ -59,7 +59,7 @@ class CallOperation : public Operation{
     CallOperation();
     CallOperation(std::string tid, int id, int srcLine, int destLine, std::string srcFilename, std::string destFilename);
     
-    //std::string getConstraintName();
+    std::string getConstraintName();
     std::string getOrderConstraintName();
     void print();
     

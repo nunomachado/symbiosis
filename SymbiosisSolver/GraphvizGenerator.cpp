@@ -145,7 +145,7 @@ string getFilenameOp(string op)
 /*
  * return operation line in de source code
  *
- * Example: "45", expecting to receive something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45 
+ * Example: "45", expecting to receive something like: [18] OS-lock_416680994-2-0&SimpleAssertKLEE.c@45
  */
 int getLineOp(string op)
 {
@@ -249,7 +249,7 @@ void graphgen::genAllGraphSchedules(vector<string> failSchedule, map<EventPair, 
     for(int oit = (int)failSchedule.size()-1; oit >= 0;oit--)
     {
         string opA = failSchedule[oit];
-
+        
         //fill map lockVariables
         if(opA.find("OS-lock")!= string::npos)
             fillMaplockVariables(opA);
@@ -270,7 +270,7 @@ void graphgen::genAllGraphSchedules(vector<string> failSchedule, map<EventPair, 
                 readDependFail[opA] = opB; //add dependence "A is data dependent on B"
                 if(writeDependFail.count(opB))
                     writeDependFail[opB].push_back(opA);
-            
+                
                 else{
                     vector<string> tmpRs;
                     tmpRs.push_back(opA);
@@ -296,7 +296,7 @@ void graphgen::genAllGraphSchedules(vector<string> failSchedule, map<EventPair, 
 
 //** compute data-dependencies for Schedule
 void computeDataDependencies(vector<string> schedule){
-
+    
     for(int oit = (int)schedule.size()-1; oit >= 0; oit--)
     {
         string opA = schedule[oit];
@@ -543,7 +543,7 @@ void cutOffPrefix( vector<ThreadSegment>* segsFail, vector<ThreadSegment>* segsA
             string aOp = (*altSchedule)[aseg.initPos]; //first operation of the alt segment
             
             if(fOp.compare(aOp)){   //if operations are different, then proceed
-
+                
                 ait++;
             }
             else
@@ -603,7 +603,7 @@ void cutOffIdenticalEvents(vector<ThreadSegment>* segsFail, vector<ThreadSegment
                     for(vector<int>::iterator tmpit = fit->dependencies.begin(); tmpit != fit->dependencies.end(); ++tmpit){
                         if(fit->initPos == *tmpit){
                             isDependency = true;
-                            break;
+                             break;
                         }
                     }
                     
@@ -619,6 +619,17 @@ void cutOffIdenticalEvents(vector<ThreadSegment>* segsFail, vector<ThreadSegment
                         ait->initPos++;
                         fOp = (*failSchedule)[fit->initPos];
                         aOp = (*altSchedule)[ait->initPos];
+                    }
+                    
+                    //check if, after pruning the common suffix, there are other blocks
+                    //that start by the same operation (this is useful when the block atomicity
+                    //is broken from the failing to the alternate schedule)
+                    if(fOp != aOp && ait != segsAlt->end()){
+                        vector<ThreadSegment>::iterator tmpait = ait;
+                        while(fOp != aOp && tmpait != segsAlt->end()){
+                            tmpait++;
+                            aOp = (*altSchedule)[tmpait->initPos];
+                        }
                     }
                 }
                 
@@ -682,8 +693,8 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
     dependIdsAlt.clear();
     
     /**
-      compute data-dependencies for AltSchedule
-      fill global vars: writeDependAlt,readDependAlt and dependIdsAlt
+     compute data-dependencies for AltSchedule
+     fill global vars: writeDependAlt,readDependAlt and dependIdsAlt
      */
     computeDataDependencies(altSchedule);
     
@@ -707,14 +718,14 @@ void graphgen::genGraphSchedule(vector<string> failSchedule, EventPair invPair, 
     // Compute thread segments for both schedules
     vector<ThreadSegment> segsFail = computeSegments(failSchedule, &exclusiveFailIds);     // ---- segments for failing schedule
     vector<ThreadSegment> segsAlt = computeSegments(altSchedule, &exclusiveAltIds);       // ---- segments for alt schedule
-
+    
     if(dspFlag!="noCuts")
     {
-    // Cutoff common prefix
-    cutOffPrefix( &segsFail, &segsAlt, &failSchedule, &altSchedule);
-
-    //new - cutoff identical events within thread segments (this is not optimized, as it could have been done in the previous cycle..)
-    cutOffIdenticalEvents(&segsFail, &segsAlt, &failSchedule, &altSchedule);
+        // Cutoff common prefix
+        cutOffPrefix( &segsFail, &segsAlt, &failSchedule, &altSchedule);
+        
+        //new - cutoff identical events within thread segments (this is not optimized, as it could have been done in the previous cycle..)
+        cutOffIdenticalEvents(&segsFail, &segsAlt, &failSchedule, &altSchedule);
     }
     
     //draw graphviz file
@@ -796,7 +807,7 @@ string getVarValue(string op)
             return it->second;
     }
     return "";
-
+    
 }
 
 string getVarBind(string srcLine, string destLine)
@@ -813,7 +824,7 @@ string getVarBind(string srcLine, string destLine)
     int i;
     for(i=0; i < varListCall.size(); i++)
         bindBuff = bindBuff + varListCall[i] + " to " + varListSign[i] + " ";
-
+    
     bindBuff = bindBuff + "]";
     cout << bindBuff << endl ;
     return bindBuff;
@@ -853,21 +864,21 @@ string getFunCallFriendlyOp(string instrCall)
 
 //turn operation in a pretty line of code
 string makeInstrFriendly(string instruction){
-
+    
     if (instruction.find("OC-FunCall-") != string::npos)
         return getFunCallFriendlyOp(instruction);
-
+    
     int filenameP =  (int)instruction.find("&");
     int lineP =      (int)instruction.find("@");
     int isOSlock = (int)instruction.find("OS-lock");
     int isOSunlock = (int)instruction.find("OS-unlock");
     string friendlyInstr = instruction;
-    //cout << friendlyInstr << endl;
+    //cout << friendlyInstr << " -> ";
     
     string value = getVarValue(friendlyInstr);
     if (value != "")
         value = "       value " + value;
-        
+    
     if(string::npos != filenameP && string::npos != lineP)
     {
         string filename = getFilenameOp(friendlyInstr);
@@ -880,13 +891,14 @@ string makeInstrFriendly(string instruction){
             string lockStr = " lock(";
             if (string::npos != isOSunlock)
                 lockStr = " unlock(";
-           
+            
             friendlyInstr = filename + " L"+ to_string(line) + lockStr + lockVarName+");";
             return friendlyInstr;
         }
         string codeLine = graphgen::getCodeLine(line, filename);
         friendlyInstr = filename+" L"+codeLine;
     }
+    //cout << friendlyInstr << endl;
     return friendlyInstr;
 }
 
@@ -923,9 +935,22 @@ string cleanInitSpacesOp(string ret)
             break;
     }
     string strOp = ret.substr(initCode);
-
+    
     //built pretty line + operation
     ret = lineN + " " + strOp;
+    
+    //remove potential comments (with '//') in source code
+    size_t pos = ret.find("//");
+    if(pos !=string::npos){
+        ret = ret.substr(0,pos);
+    }
+    else {
+        pos = ret.find("/*");
+        if(pos!=string::npos){
+           ret = ret.substr(0,pos);
+        }
+    }
+    
     return ret;
 }
 
@@ -955,8 +980,8 @@ string graphgen::getCodeLine(int line, string filename)
         ret = ret + c[0];
         read(procR,c,1);
     }
-    if(ret.find("(")==string::npos || ret.find(")") == string::npos )
-        return getCodeLine(line-1, filename);
+    //if(ret.find("(")==string::npos || ret.find(")") == string::npos )
+      //  return getCodeLine(line-1, filename);
     string op = cleanInitSpacesOp(ret);
     return op;  //remove special caracteres and white spaces between line number and operation
 }
@@ -1047,10 +1072,10 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
                 nextOp = schedule[j+1];
                 friendlyOpNext = cleanOperation(makeInstrFriendly(nextOp));
             }
-          
+            
             string port = getDependencePort(op,schType);
             string friendlyOp = cleanOperation(makeInstrFriendly(op));
-
+            
             if(port.empty())
             {
                 if(friendlyOp == previousOp || (friendlyOp == friendlyOpNext && !(getDependencePort( nextOp, schType).empty()))) // jump write if 1) == previous, or 2) next operation is equal and special (with a port)
@@ -1120,7 +1145,7 @@ void graphgen::drawGraphviz(const vector<ThreadSegment>& segsFail, const vector<
     
     string bugSolution = bugCauseToGviz(invPair, failSchedule);
     string previousOp = "", nextOp = "";
-
+    
     //draw file header
     drawHeader(outFile, bugSolution);
     

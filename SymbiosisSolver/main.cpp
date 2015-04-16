@@ -367,8 +367,7 @@ void parse_constraints(string symbFilePath)
                 token = strtok (NULL,"-:");
                 line = atoi(token);
                 
-                token = strtok (NULL,"-:"); //token = type (S,R, or W, CS)
-                
+                token = strtok (NULL,"-:"); //token = type (S,R, or W)
                 //########## HEAD
                 if(!strcmp(token,"CS"))
                 {
@@ -925,14 +924,23 @@ bool verifyConstraintModel(ConstModelGen *cmgen)
     cout << "\n### SOLVING CONSTRAINT MODEL: Z3\n";
     success = cmgen->solve();
     
-    cout<< "\n\nOLD SCH" << endl;
-    scheduleLIB::printSch(failScheduleOrd);
+    if(success)
+    {
+        cout<< "\n\nOLD SCH" << endl;
+        scheduleLIB::printSch(failScheduleOrd);
         
-    Schedule simpleSch = scheduleLIB::scheduleSimplify(failScheduleOrd,cmgen);
-    scheduleLIB::saveScheduleFile(solutionFile,scheduleLIB::schedule2string(simpleSch));
+        bool useCSR = true;
+        Schedule simpleSch;
         
-    cout<< "\n\nNEW SCH" << endl;
-    scheduleLIB::printSch(failScheduleOrd);
+        if(useCSR){
+            simpleSch = scheduleLIB::scheduleSimplify(failScheduleOrd,cmgen);
+            cout<< "\n\nNEW SCH" << endl;
+            scheduleLIB::printSch(failScheduleOrd);
+        }
+        else
+            simpleSch = failScheduleOrd;
+        scheduleLIB::saveScheduleFile(solutionFile,scheduleLIB::schedule2string(simpleSch));
+    }
     
     //** clean data structures
     cmgen->resetSolver();
@@ -1573,9 +1581,9 @@ int main(int argc, char *const* argv)
     {
         //parse_avisoTrace();
         generateConstraintModel();
-        for(map<string,string>::iterator it = solutionValues.begin();it!= solutionValues.end();it++){
+        /*for(map<string,string>::iterator it = solutionValues.begin();it!= solutionValues.end();it++){
             cout << it->first << " : " << it-> second << endl;
-        }
+        }*/
         
         //save variable values to file
         util::saveVarValues2File(sourceFilePath+("Values.txt"),solutionValues);

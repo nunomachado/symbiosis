@@ -225,7 +225,8 @@ int scheduleLIB::hasNextTEI(Schedule sch, int pos)
 //create a string vector of actions, e.i. used in solver.
 vector<string> scheduleLIB::getSolutionStr(Schedule schedule){
     vector<string> actionsList;
-    int i = 0;
+    int i=0 ;
+    
     for(Schedule::iterator it = schedule.begin(); it != schedule.end(); it++)
     {
         actionsList.push_back((*it)->getOrderConstraintName());
@@ -297,8 +298,12 @@ Schedule scheduleLIB::scheduleSimplify(Schedule schedule, ConstModelGen *cmgen)
     bool continueS = true ;
     int count = 0;
     bool notReverse = false;
+    
+    cout << "##### CONTEXT SWITCH REDUCTION ALGORITHM\n";
+    
     while(continueS)
     {
+        cout << "\n> Iteration " << count << endl;
         //removeLastTEI
         //### NOT IMPLEMENTED ###
         
