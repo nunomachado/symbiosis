@@ -399,11 +399,11 @@ void addLockOp2Dependencies(const vector<string>& schedule, ThreadSegment* tseg,
     //find potential wrapping locking region
     for(j = i-1; j > tseg->initPos; j--)
     {
-        if(schedule[j].find("unlock")!= string::npos){
+        if(schedule[j].find("S-unlock")!= string::npos){
             break;
         }
-        else if(schedule[j].find("lock")!= string::npos){
-            //cout << "addlockdependcies: "<< schedule[j] << endl;
+        else if(schedule[j].find("S-lock")!= string::npos){
+           // cout << "addlockdependcies: "<< schedule[j] << endl;
             
             (tseg->dependencies).push_back(j);
             exclusiveSchIds->push_back(j); //add lock id to exclusive
@@ -411,7 +411,7 @@ void addLockOp2Dependencies(const vector<string>& schedule, ThreadSegment* tseg,
             //we've found a lock; find the corresponding unlock
             for(k = i+1; k < schedule.size(); k++)
             {
-                if(schedule[k].find("unlock")!= string::npos){
+                if(schedule[k].find("S-unlock")!= string::npos){
                     //cout << "addlockdependcies: "<< schedule[k] << endl;
                     (tseg->dependencies).push_back(k);
                     exclusiveSchIds->push_back(k); //add unlock id to exclusive
@@ -929,7 +929,7 @@ string getFunCallFriendlyOp(string instrCall)
 
 //turn operation in a pretty line of code
 string makeInstrFriendly(string instruction){
-
+    
     if (instruction.find("OC-FunCall-") != string::npos)
         return getFunCallFriendlyOp(instruction);
     
