@@ -369,8 +369,8 @@ void computeExclusiveDependencies(vector<int>* exclusiveFailIds, vector<int>* ex
                 cout << "Exclusive Fail:\t" << dit->first << " <-- " << dit->second << "\n";
                 
                 //add relevant threads
-                relevantThreads.insert(util::parseThreadId(dit->first));
-                relevantThreads.insert(util::parseThreadId(dit->second));
+                relevantThreads.insert(operationLIB::parseThreadId(dit->first));
+                relevantThreads.insert(operationLIB::parseThreadId(dit->second));
             }
             
             //ALT SCHEDULE
@@ -381,7 +381,7 @@ void computeExclusiveDependencies(vector<int>* exclusiveFailIds, vector<int>* ex
                 cout << "Exclusive Alt:\t" << dit->first << " <-- " << writeAlt << "\n";
                 
                 //add relevant threads
-                relevantThreads.insert(util::parseThreadId(writeAlt));
+                relevantThreads.insert(operationLIB::parseThreadId(writeAlt));
             }
             numDepDifDebug++;
         }
@@ -464,7 +464,7 @@ vector<ThreadSegment> computeSegments( const vector<string>& schedule, vector<in
 {
     vector<ThreadSegment> segsList;
     string op = schedule[0];
-    string prevTid = util::parseThreadId(op); //indicates the last thread id observed
+    string prevTid = operationLIB::parseThreadId(op); //indicates the last thread id observed
     
     int initSeg = 0;  //indicates the start of the current segment
     
@@ -472,7 +472,7 @@ vector<ThreadSegment> computeSegments( const vector<string>& schedule, vector<in
     for(oit = 1; oit < schedule.size(); oit++)
     {
         op = schedule[oit];
-        string tid = util::parseThreadId(op);
+        string tid = operationLIB::parseThreadId(op);
         
         if(tid != prevTid)
         {
@@ -496,13 +496,13 @@ void addAllReadDependencies(vector<int>* exclusiveFailIds,vector<int>* exclusive
     {
         string writeAlt = ait->second;
         string readAlt = ait->first;
-        string tid = util::parseThreadId(readAlt);
+        string tid = operationLIB::parseThreadId(readAlt);
         
         for(vector<string>::iterator rit = writeDependAlt[writeAlt].begin();
             rit != writeDependAlt[writeAlt].end();++rit)
         {
             string tmpR = *rit;
-            if(tmpR.compare(readAlt) && tid==util::parseThreadId(tmpR))
+            if(tmpR.compare(readAlt) && tid==operationLIB::parseThreadId(tmpR))
             {
                 exclusiveAlt[tmpR] = writeAlt;
                 exclusiveAltIds->push_back(dependIdsAlt[tmpR]);
@@ -514,7 +514,7 @@ void addAllReadDependencies(vector<int>* exclusiveFailIds,vector<int>* exclusive
             rit != writeDependFail[writeAlt].end();++rit)
         {
             string tmpR = *rit;
-            if(!exclusiveFail.count(tmpR) && tid==util::parseThreadId(tmpR))
+            if(!exclusiveFail.count(tmpR) && tid==operationLIB::parseThreadId(tmpR))
             {
                 exclusiveFail[tmpR] = writeAlt;
                 exclusiveFailIds->push_back(dependIdsFail[tmpR]);
@@ -866,7 +866,7 @@ string getVarBind(string srcLine, string destLine)
     if (varListSign.size() != varListCall.size())
     {
         cerr << "Error when binding variables, different sizes" << endl;
-        exit(0);
+        exit(1);
     }
     string bindBuff = "( ";
     string separator = " , ";
@@ -920,7 +920,7 @@ string getFunCallFriendlyOp(string instrCall)
         cerr << "Error when binding variables, str = empty" << endl;
         cerr << "func call: "<< srcOp << "!" << endl;
         cerr << "func signature: " << destOp << "!" << endl;
-        exit(0);
+        exit(1);
     }
     
     string funcSign = graphgen::cleanCallFunc(destOp);
@@ -963,7 +963,6 @@ string makeInstrFriendly(string instruction){
     //cout << friendlyInstr << endl;
     return friendlyInstr;
 }
-
 
 
 
@@ -1027,6 +1026,7 @@ string look4LineWith(string token, int line, string filename)
     
     return signature;
 }
+
 
 string graphgen::cleanRight(const string& op)
 {//"    55\t                            char *dst, int dstBegin) {"
@@ -1206,8 +1206,6 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
     }
 }
 
-
-
 /*
  * Draw failing schedule and alternate schedule in graphviz format
  *
@@ -1236,7 +1234,7 @@ void graphgen::drawGraphviz(const vector<ThreadSegment>& segsFail, const vector<
     {
         cerr << " -> Error opening file "<< path <<".\n";
         outFile.close();
-        exit(0);
+        exit(1);
     }
     
     string bugSolution = bugCauseToGviz(invPair, failSchedule);

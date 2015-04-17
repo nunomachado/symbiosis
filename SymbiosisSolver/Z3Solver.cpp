@@ -55,7 +55,7 @@ void Z3Solver::openOutputFile()
     {
         cerr << " -> Error opening file "<< formulaFile <<".\n";
         z3File.close();
-        exit(0);
+        exit(1);
     }
     
     //set Z3 options
@@ -72,7 +72,7 @@ void Z3Solver::openInputFile()
     {
         cerr << " -> Error opening file "<< formulaFile <<".\n";
         z3File.close();
-        exit(0);
+        exit(1);
     }
     
     //set Z3 options
@@ -99,8 +99,7 @@ string Z3Solver::readLinePipe()
 string getOpDefinition(string line)
 {
     int posBegin = (int)line.find("(define-fun ") + 12;  //place posBegin in the first char of the order operation
-    int posEnd = (int)line.find("()") - 1;               //place posEnd in the last char of the order operation
-    
+    int posEnd = (int)line.find("()") - 1;               //place posEnd in the last char of the order operation    
     return line.substr(posBegin, posEnd-posBegin);
 }
 

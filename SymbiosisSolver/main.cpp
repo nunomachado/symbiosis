@@ -217,7 +217,7 @@ void parse_constraints(string symbFilePath)
         util::print_state(fin);
         cerr << " -> Error opening file "<< symbFilePath <<".\n";
         fin.close();
-        exit(0);
+        exit(1);
     }
     
     std::cout << ">> Parsing " << util::extractFileBasename(symbFilePath) << endl;
@@ -851,7 +851,7 @@ void parse_avisoTrace()
         util::print_state(fin);
         cout << " -> Error opening file "<< avisoFilePath <<".\n";
         fin.close();
-        exit(0);
+        exit(1);
     }
     
     // read each line of the file
@@ -1203,7 +1203,7 @@ vector<EventPair> generateEventPairs(map<string, int> mapOpToId, vector<string> 
     for(vector<string>::iterator it = opsToInvert.begin(); it!=opsToInvert.end();++it)
     {
         string op1 = *it;
-        string tid1 = util::parseThreadId(op1);
+        string tid1 = operationLIB::parseThreadId(op1);
         string var1 = util::parseVar(op1);
         Segment seg1 = std::make_pair(mapOpToId[op1],mapOpToId[op1]);
         
@@ -1214,7 +1214,7 @@ vector<EventPair> generateEventPairs(map<string, int> mapOpToId, vector<string> 
         for(i = mapOpToId[op1]; i > 0; i--)
         {
             string op2 = solution[i];
-            string tid2 = util::parseThreadId(op2);
+            string tid2 = operationLIB::parseThreadId(op2);
             
             if(op2.find("-lock")!=std::string::npos && tid2 == tid1)
             {
@@ -1249,7 +1249,7 @@ vector<EventPair> generateEventPairs(map<string, int> mapOpToId, vector<string> 
         {
             int pos = unsatCore[i];
             string op2 = solution[pos];
-            string tid2 = util::parseThreadId(op2);
+            string tid2 = operationLIB::parseThreadId(op2);
             
             //** disregard events of the same thread, as well as exits/joins
             if(tid1 == tid2
@@ -1315,11 +1315,11 @@ vector<string> generateNewSchedule(EventPair invPair)
     //parse A's thread id
     string opA = solution[i];
     size_t init, end;
-    string tidA = util::parseThreadId(opA);
+    string tidA = operationLIB::parseThreadId(opA);
     
     //parse B's thread id
     string opB = solution[invPair.second.first];
-    string tidB = util::parseThreadId(opB);
+    string tidB = operationLIB::parseThreadId(opB);
     
     for(j = i; j < solution.size(); j++)
     {
@@ -1331,7 +1331,7 @@ vector<string> generateNewSchedule(EventPair invPair)
         
         //parse op thread id
         string opC = solution[j];
-        string tidC = util::parseThreadId(opC);
+        string tidC = operationLIB::parseThreadId(opC);
         
         //** we don't want to reorder the events of the other threads (Nuno: we're not doing this at the moment)
         if(tidC!=tidB)//if(tidA == tidB)

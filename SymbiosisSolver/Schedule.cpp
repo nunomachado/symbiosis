@@ -74,11 +74,10 @@ void scheduleLIB::loadSchedule(const vector<string>& globalOrderTmp)
         for(int i = 0; i < globalOrder.size(); i++)
         {
             string op = globalOrder[i];
-            
-            string tid = util::parseThreadId(op);
+            string tid = operationLIB::parseThreadId(op);
             
             //fill failScheduleOrd
-            util::fillScheduleOrd(tid, &t2op, &scheduleTmp);
+            scheduleLIB::fillScheduleOrd(tid, &t2op, &scheduleTmp);
         }
         failScheduleOrd.clear();
         failScheduleOrd.reserve(globalOrder.size());
@@ -109,7 +108,7 @@ void scheduleLIB::saveScheduleFile(string filename, const vector<string>& listOp
     {
         cerr << " -> Error opening file " << formulaFile << ".\n";
         solFile.close();
-        exit(0);
+        exit(1);
     }
     cout << "Saving solution to file: " << filename << endl;
     
@@ -288,6 +287,7 @@ Schedule scheduleLIB::moveUpTEI(Schedule schedule,ConstModelGen *cmgen, bool isR
 }
 
 
+
 // return a new valid schedule with a shorter or equal using a reverse moveUpTei algorithm
 Schedule scheduleLIB::moveDownTEI(Schedule schedule, ConstModelGen *cmgen)
 {
@@ -335,4 +335,15 @@ Schedule scheduleLIB::scheduleSimplify(Schedule schedule, ConstModelGen *cmgen)
             continueS = false; //simplification without effect, exit cycle.
     }
     return oldSch;
+}
+
+//fill ScheduleOrd
+void scheduleLIB::fillScheduleOrd(string tid, map<string,vector<Operation*>>* op_list, Schedule* sch)
+{
+    //get the head
+    sch->push_back((*op_list)[tid][0]);
+    
+    //remove the head
+    vector<Operation*>::iterator it_erase = (*op_list)[tid].begin();
+    (*op_list)[tid].erase(it_erase);
 }

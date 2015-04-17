@@ -15,6 +15,14 @@
 #include <string>
 #include <map>
 
+namespace operationLIB{
+    
+    std::string parseThreadId(std::string operation);       //parses the threadId of an operation
+
+}
+
+
+
 class Operation {
     protected:
     std::string threadId;   //thread id

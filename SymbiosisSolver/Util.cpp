@@ -33,7 +33,7 @@ void util::saveVarValues2File(std::string filename, std::map<std::string, std::s
     {
         cerr << " -> Error opening file "<< filename <<".\n";
         outFile.close();
-        exit(0);
+        exit(1);
     }
     cout << "Saving Map Structure to file: " << filename << "\n";
     
@@ -75,19 +75,6 @@ string util::threadTabsPP(int tab)
     }
     return str;
 }
-
-
-//fill ScheduleOrd
-void util::fillScheduleOrd(string tid, map<string,vector<Operation*>>* op_list, Schedule* sch)
-{
-    //get the head
-    sch->push_back((*op_list)[tid][0]);
-    
-    //remove the head
-    vector<Operation*>::iterator it_erase = (*op_list)[tid].begin();
-    (*op_list)[tid].erase(it_erase);
-}
-
 
 //transforms a int into a string
 string util::stringValueOf(int i)
@@ -228,22 +215,6 @@ bool util::isClosedExpression(string expr)
     }
     
     return (numOpen == numClose);
-    
-}
-
-std::string util::parseThreadId(std::string op)
-{
-    int posBegin = (int)op.find_first_of("-", op.find_first_of("-") + 1)+1;
-    while(op.at(posBegin) == '>')
-        posBegin = (int)op.find_first_of("-", posBegin) + 1;
-    
-    //for read operations, we have to consider the readId as well
-    int posEnd = (int)op.find_first_of("-", posBegin);
-    int posEnd2 = (int)op.find_first_of("&", posBegin);
-    if(posEnd != string::npos)
-        return op.substr(posBegin, posEnd-posBegin);
-    
-    return op.substr(posBegin, posEnd2-posBegin);
     
 }
 

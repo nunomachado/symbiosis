@@ -350,3 +350,20 @@ void SyncOperation::print()
     else
         cout << "[" << threadId << "] " << type << "_" << var << "-" << id << "&" << filename << "@" << line << endl;
 }
+
+std::string operationLIB::parseThreadId(std::string op)
+{
+    int posBegin = (int)op.find_first_of("-", op.find_first_of("-") + 1)+1;
+    while(op.at(posBegin) == '>')
+        posBegin = (int)op.find_first_of("-", posBegin) + 1;
+    
+    //for read operations, we have to consider the readId as well
+    int posEnd = (int)op.find_first_of("-", posBegin);
+    int posEnd2 = (int)op.find_first_of("&", posBegin);
+    if(posEnd != string::npos)
+        return op.substr(posBegin, posEnd-posBegin);
+    
+    return op.substr(posBegin, posEnd2-posBegin);
+    
+}
+

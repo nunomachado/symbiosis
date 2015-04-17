@@ -27,6 +27,7 @@ namespace scheduleLIB{
     
     std::vector<std::string> schedule2string(const Schedule& schedule); // transform a given schedule do a string's vector
     std::vector<std::string> getSolutionStr(Schedule schedule);  //create a string vector of actions, e.i. used in solver.
+    void fillScheduleOrd(std::string tid, std::map< std::string, std::vector<Operation*>> *op_list , Schedule* schedule);
     
     Schedule insertTEI(Schedule schedule, int newPosition, Schedule tei); //insert TEI in a schedule
     Schedule removeTEI(Schedule schedule, int initPosition); //removeTEI from a schedule
