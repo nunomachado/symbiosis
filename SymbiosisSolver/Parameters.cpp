@@ -13,6 +13,7 @@ const int MAX_LINE_SIZE = 512;
 bool debug = false;
 bool bugFixMode = false;
 bool jpfMode = false;
+bool csr = false;
 std::string symbFolderPath = "";
 std::string avisoFilePath = "";
 std::string solverPath = "";

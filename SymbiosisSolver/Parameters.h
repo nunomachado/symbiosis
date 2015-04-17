@@ -21,6 +21,7 @@ typedef std::vector<Operation*> Schedule;
     extern bool debug;                  //prints debug info
     extern bool bugFixMode;             //run in bug fixing mode
     extern bool jpfMode;                //parse symbolic traces with Java Path Finder syntax
+    extern bool csr;                    //run with failling scheadule simplification
     extern std::string symbFolderPath;  //path to the folder containing the symbolic event traces
     extern std::string avisoFilePath;   //path to the aviso event trace
     extern std::string solverPath;      //path to the solver executable

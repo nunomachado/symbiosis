@@ -75,6 +75,7 @@ void parse_args(int argc, char *const* argv)
             {"debug", no_argument, 0, 'd'},
             {"fix-mode", no_argument, 0, 'f'},
             {"dsp", required_argument, 0, 'u'},
+            {"csr", no_argument, 0, 'r'},
             {"", }
            
             
@@ -123,6 +124,9 @@ void parse_args(int argc, char *const* argv)
             case 'u':
                 dspFlag = optarg; // extended, short, can be also empty
                 break;
+            case 'r':
+                csr = true; // context switch reduction
+                break;
                 
             /*case 'r':
                 assertThread = optarg;
@@ -170,12 +174,18 @@ void parse_args(int argc, char *const* argv)
     else
         cout << "# MODE: FIND BUG-TRIGGERING SCHEDULE\n";
     
-     if(!avisoFilePath.empty()) cout << "# AVISO TRACE: " << avisoFilePath << endl;
-     if(!symbFolderPath.empty()) cout << "# SYMBOLIC TRACES: " << symbFolderPath << endl;
-     cout << "# SOLVER: " << solverPath << endl;
-     cout << "# CONSTRAINT MODEL: " << formulaFile << endl;
-     cout << "# SOLUTION: " << solutionFile << endl;
+    if(csr && !bugFixMode)
+        cout << "# CONTEXT SWITCH REDUCTION: on"   << endl;
+    if(!csr && !bugFixMode)
+        cout << "# CONTEXT SWITCH REDUCTION: off"   << endl;
     
+    cout << "# DSP:" << dspFlag <<"\t\t(options = extended, short, \"\")" << endl;
+    
+    if(!avisoFilePath.empty()) cout << "# AVISO TRACE: " << avisoFilePath << endl;
+    if(!symbFolderPath.empty()) cout << "# SYMBOLIC TRACES: " << symbFolderPath << endl;
+    cout << "# SOLVER: " << solverPath << endl;
+    cout << "# CONSTRAINT MODEL: " << formulaFile << endl;
+    cout << "# SOLUTION: " << solutionFile << endl;
     cout << endl;
 }
 
@@ -928,10 +938,10 @@ bool verifyConstraintModel(ConstModelGen *cmgen)
         cout<< "\n\nOLD SCH" << endl;
         scheduleLIB::printSch(failScheduleOrd);
         
-        bool useCSR = true;
+        //bool useCSR = true;
         Schedule simpleSch;
         
-        if(useCSR){
+        if(csr){
             simpleSch = scheduleLIB::scheduleSimplify(failScheduleOrd,cmgen);
             cout<< "\n\nNEW SCH" << endl;
             scheduleLIB::printSch(failScheduleOrd);
@@ -1578,16 +1588,14 @@ int main(int argc, char *const* argv)
         
         //findBug
         bool success = findBugRootCause(&altSchedules, &solution);
-        
-        //print data-dependencies and stats only when Symbiosis has found an alternate schedule
-        if(success)
+        if(success) //print data-dependencies and stats only when Symbiosis has found an alternate schedule
         {
             solutionValuesAlt = solutionValues;
             graphgen::drawAllGraph(altSchedules, solution);
         }
-        //save solution schedule
+        
         solutionFile.insert(solutionFile.find(".txt"),"ALT");
-        scheduleLIB::saveScheduleFile(solutionFile,altScheduleOrd);
+        scheduleLIB::saveScheduleFile(solutionFile,altScheduleOrd); //save solution schedule
     }
     return 0;
 }

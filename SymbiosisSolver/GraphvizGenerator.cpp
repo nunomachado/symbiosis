@@ -975,7 +975,6 @@ string cleanInitSpacesOp(string ret)
     
      //for some reason (probably to allow flushing the buffer read from the grep process), this is necessary to avoid misreading the line
     sleep(1);
-    
     ret = ret.substr(ret.find_first_of("1234567890")); //remove de /x01 caracter
     
     //find line number and store it in lineN
