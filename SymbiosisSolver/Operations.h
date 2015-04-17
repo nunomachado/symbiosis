@@ -18,7 +18,7 @@
 namespace operationLIB{
     
     std::string parseThreadId(std::string operation);       //parses the threadId of an operation
-
+    std::string parseOperation(std::string operation);       //parses the operation
 }
 
 

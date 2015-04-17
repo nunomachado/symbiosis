@@ -52,6 +52,13 @@ std::map<std::string, std::string> util::loadVarValuesFromFile(std::string filen
     string first_var;
     string second_value;
     ifstream inSol(filename);
+    if(!inSol.is_open())
+    {
+        cerr << " -> Error opening file "<< filename << endl;
+        inSol.close();
+        exit(1);
+    }
+    cout << "Loading Map Structure from file: " << filename << endl;
     string lineSol;
     while (getline(inSol, lineSol))
     {

@@ -345,6 +345,12 @@ bool isUnsatCoreOp(string varFail)
 }
 
 
+bool isReadBugCondition(string readFail){
+    readFail = operationLIB::parseOperation(readFail);
+    cout << readFail << endl;
+    return (find(bugCondOps.begin(),bugCondOps.end(),readFail) != bugCondOps.end());
+}
+
 //** compute exclusive dependencies (i.e. dependencies that appear only in the failing
 //** schedule or in the alternate schedule)
 void computeExclusiveDependencies(vector<int>* exclusiveFailIds, vector<int>* exclusiveAltIds)
@@ -359,7 +365,7 @@ void computeExclusiveDependencies(vector<int>* exclusiveFailIds, vector<int>* ex
             continue;
         
         string writeAlt = readDependAlt[dit->first];
-        if(writeFail!=writeAlt)
+        if(writeFail!=writeAlt || isReadBugCondition(dit->first))
         {
             //FAILING SCHEDULE
             if(writeFail!=""){
@@ -444,7 +450,7 @@ void computeSingleSegment(const vector<string>& schedule, vector<ThreadSegment>*
     tseg.tid = prevTid;
     
     //check if the current block comprises operations with dependencies
-    int exsize = exclusiveSchIds->size();
+    int exsize = (int)exclusiveSchIds->size();
     for(int dit = dependIt; dit < exsize; dit++) // check if there are exclusive operations (position) that compreend the segment borders (init and end)
     {
         dependIt = dit;

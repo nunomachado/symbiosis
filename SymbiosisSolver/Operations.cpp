@@ -367,3 +367,13 @@ std::string operationLIB::parseThreadId(std::string op)
     
 }
 
+std::string operationLIB::parseOperation(std::string op)
+{   //OW-accounts_51-0-0&Bank.java@32
+    int posInit = (int)op.find_first_of("O");
+    op = op.substr(posInit+1);
+    int posEnd = (int)op.find_first_of("&");
+    op = op.substr(0,posEnd);
+    return op;
+
+}
+
