@@ -397,7 +397,7 @@ void addLockOp2Dependencies(const vector<string>& schedule, ThreadSegment* tseg,
 {
     int j,k;
     //find potential wrapping locking region
-    for(j = i-1; j > tseg->initPos; j--)
+    for(j = i-1; j >= tseg->initPos; j--)
     {
         if(schedule[j].find("S-unlock")!= string::npos){
             break;
@@ -584,58 +584,17 @@ void cutOffPrefix( vector<ThreadSegment>* segsFail, vector<ThreadSegment>* segsA
 //new - cutoff identical events within thread segments (this is not optimized, as it could have been done in the previous cycle..)
 void cutOffIdenticalEvents(vector<ThreadSegment>* segsFail, vector<ThreadSegment>* segsAlt, vector<string>* failSchedule, vector<string>* altSchedule)
 {
-    vector<ThreadSegment>::iterator fit = segsFail->begin();
-    
-    while(fit != segsFail->end())
-    {
-        vector<ThreadSegment>::iterator ait = segsAlt->begin();
-        while(ait != segsAlt->end() && fit != segsFail->end())
+    for(int i = 0; i < 2; i++){
+        
+        vector<ThreadSegment>::iterator fit = segsFail->begin();
+        while(fit != segsFail->end())
         {
-            //prune common prefix within the segments, until operations are different or one of them has a dependency
-            string fOp = (*failSchedule)[fit->initPos]; //first operation of the fail segment
-            string aOp = (*altSchedule)[ait->initPos]; //first operation of the alt segment
-            
-            if(fOp == aOp){
-                bool isDependency = false;
-                while(fOp == aOp && !isDependency)
-                {
-                    //check whether the head operations are involved in a dependency or not; stop pruning if so
-                    for(vector<int>::iterator tmpit = fit->dependencies.begin(); tmpit != fit->dependencies.end(); ++tmpit){
-                        if(fit->initPos == *tmpit){
-                            isDependency = true;
-                             break;
-                        }
-                    }
-                    
-                    for(vector<int>::iterator tmpit = ait->dependencies.begin(); tmpit != ait->dependencies.end() && !isDependency; ++tmpit){
-                        if(ait->initPos == *tmpit){
-                            isDependency = true;
-                            break;
-                        }
-                    }
-                    
-                    if(!isDependency){
-                        fit->initPos++;
-                        ait->initPos++;
-                        fOp = (*failSchedule)[fit->initPos];
-                        aOp = (*altSchedule)[ait->initPos];
-                    }
-                    
-                    //check if, after pruning the common suffix, there are other blocks
-                    //that start by the same operation (this is useful when the block atomicity
-                    //is broken from the failing to the alternate schedule)
-                    if(fOp != aOp && ait != segsAlt->end()){
-                        vector<ThreadSegment>::iterator tmpait = ait;
-                        while(fOp != aOp && tmpait != segsAlt->end()){
-                            tmpait++;
-                            aOp = (*altSchedule)[tmpait->initPos];
-                        }
-                    }
-                }
-                
-                //prune common suffix within the segments, until operations are different or one of them has a dependency
-                fOp = (*failSchedule)[fit->endPos]; //last operation of the fail segment
-                aOp = (*altSchedule)[ait->endPos]; //last operation of the alt segment
+            vector<ThreadSegment>::iterator ait = segsAlt->begin();
+            while(ait != segsAlt->end() && fit != segsFail->end())
+            {
+                //prune common prefix within the segments, until operations are different or one of them has a dependency
+                string fOp = (*failSchedule)[fit->initPos]; //first operation of the fail segment
+                string aOp = (*altSchedule)[ait->initPos]; //first operation of the alt segment
                 
                 if(fOp == aOp){
                     bool isDependency = false;
@@ -643,42 +602,85 @@ void cutOffIdenticalEvents(vector<ThreadSegment>* segsFail, vector<ThreadSegment
                     {
                         //check whether the head operations are involved in a dependency or not; stop pruning if so
                         for(vector<int>::iterator tmpit = fit->dependencies.begin(); tmpit != fit->dependencies.end(); ++tmpit){
-                            if(fit->endPos == *tmpit){
+                            if(fit->initPos == *tmpit){
                                 isDependency = true;
                                 break;
                             }
                         }
                         
                         for(vector<int>::iterator tmpit = ait->dependencies.begin(); tmpit != ait->dependencies.end() && !isDependency; ++tmpit){
-                            if(ait->endPos == *tmpit){
+                            if(ait->initPos == *tmpit){
                                 isDependency = true;
                                 break;
                             }
                         }
                         
                         if(!isDependency){
-                            fit->endPos--;
-                            ait->endPos--;
-                            fOp = (*failSchedule)[fit->endPos];
-                            aOp = (*altSchedule)[ait->endPos];
+                            fit->initPos++;
+                            ait->initPos++;
+                            fOp = (*failSchedule)[fit->initPos];
+                            aOp = (*altSchedule)[ait->initPos];
+                        }
+                        
+                        //check if, after pruning the common suffix, there are other blocks
+                        //that start by the same operation (this is useful when the block atomicity
+                        //is broken from the failing to the alternate schedule)
+                        /*if(fOp != aOp && ait != segsAlt->end()){
+                         vector<ThreadSegment>::iterator tmpait = ait;
+                         while(fOp != aOp && tmpait != segsAlt->end()){
+                         tmpait++;
+                         aOp = (*altSchedule)[tmpait->initPos];
+                         }
+                         }*/
+                    }
+                    
+                    //prune common suffix within the segments, until operations are different or one of them has a dependency
+                    fOp = (*failSchedule)[fit->endPos]; //last operation of the fail segment
+                    aOp = (*altSchedule)[ait->endPos]; //last operation of the alt segment
+                    
+                    if(fOp == aOp){
+                        bool isDependency = false;
+                        while(fOp == aOp && !isDependency)
+                        {
+                            //check whether the head operations are involved in a dependency or not; stop pruning if so
+                            for(vector<int>::iterator tmpit = fit->dependencies.begin(); tmpit != fit->dependencies.end(); ++tmpit){
+                                if(fit->endPos == *tmpit){
+                                    isDependency = true;
+                                    break;
+                                }
+                            }
+                            
+                            for(vector<int>::iterator tmpit = ait->dependencies.begin(); tmpit != ait->dependencies.end() && !isDependency; ++tmpit){
+                                if(ait->endPos == *tmpit){
+                                    isDependency = true;
+                                    break;
+                                }
+                            }
+                            
+                            if(!isDependency){
+                                fit->endPos--;
+                                ait->endPos--;
+                                fOp = (*failSchedule)[fit->endPos];
+                                aOp = (*altSchedule)[ait->endPos];
+                            }
                         }
                     }
+                    
+                    //erase potential empty segments
+                    if(fit->initPos > fit->endPos)
+                        fit = segsFail->erase(fit);
+                    
+                    if(ait->initPos > ait->endPos)
+                        ait = segsAlt->erase(ait);
+                    
+                    break;
                 }
-                
-                //erase potential empty segments
-                if(fit->initPos > fit->endPos)
-                    fit = segsFail->erase(fit);
-                
-                if(ait->initPos > ait->endPos)
-                    ait = segsAlt->erase(ait);
-                
-                break;
+                else{
+                    ait++;
+                }
             }
-            else{
-                ait++;
-            }
+            fit++;
         }
-        fit++;
     }
 }
 
