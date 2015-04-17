@@ -881,6 +881,19 @@ string getVarBind(string srcLine, string destLine)
 }
 
 
+//receive a function signature and return just its name. i.e. reveives void name(); and return "name"
+string graphgen::cleanCallFunc(string funcSign)
+{ //"54  \tvoid StringBuffer::getChars(...) {" returns "getChars"
+    funcSign = graphgen::cleanRight(funcSign);
+    int classSymb = (int)funcSign.find("::");
+    if(classSymb!= string::npos)
+        funcSign = funcSign.substr(classSymb+2);
+
+    funcSign = funcSign.substr(0,funcSign.find("("));
+    vector<string> funcType_funcName= splitVars(funcSign);
+    string funcName = funcType_funcName.back();
+    return funcSign;
+}
 
 //return a friendly string with parameters binding
 string getFunCallFriendlyOp(string instrCall)
@@ -907,11 +920,11 @@ string getFunCallFriendlyOp(string instrCall)
         cerr << "func signature: " << destOp << "!" << endl;
         exit(0);
     }
-    //"54  \tvoid StringBuffer::getChars(int srcBegin, int srcEnd,char *dst, int dstBegin) {"
-    string funcCall = graphgen::cleanRight(destOp);
-    funcCall = funcCall.substr(0,funcCall.find("(")-1);
+    
+    string funcSign = graphgen::cleanCallFunc(destOp);
     string vars = getVarBind(srcOp, destOp);
-    return funcCall + vars;
+    funcSign = "CALL "+funcSign + vars;
+    return funcSign;
 }
 
 //turn operation in a pretty line of code
@@ -1014,7 +1027,7 @@ string look4LineWith(string token, int line, string filename)
     return signature;
 }
 
-string graphgen::cleanRight(string op)
+string graphgen::cleanRight(const string& op)
 {//"    55\t                            char *dst, int dstBegin) {"
     int i = 0;
     string cleanStr = "";
