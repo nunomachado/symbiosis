@@ -403,18 +403,25 @@ void addLockOp2Dependencies(const vector<string>& schedule, ThreadSegment* tseg,
             break;
         }
         else if(schedule[j].find("S-lock")!= string::npos){
-           // cout << "addlockdependcies: "<< schedule[j] << endl;
             
-            (tseg->dependencies).push_back(j);
-            exclusiveSchIds->push_back(j); //add lock id to exclusive
+            //add new dependencies, if necessary
+            if(find(exclusiveSchIds->begin(),exclusiveSchIds->end(),j) == exclusiveSchIds->end()){
+                //cout << "addlockdependencies: "<< schedule[j] << endl;
+                (tseg->dependencies).push_back(j);
+                exclusiveSchIds->push_back(j); //add lock id to exclusive
+            }
             
             //we've found a lock; find the corresponding unlock
-            for(k = i+1; k < schedule.size(); k++)
+            for(k = i+1; k <= tseg->endPos; k++)
             {
                 if(schedule[k].find("S-unlock")!= string::npos){
-                    //cout << "addlockdependcies: "<< schedule[k] << endl;
-                    (tseg->dependencies).push_back(k);
-                    exclusiveSchIds->push_back(k); //add unlock id to exclusive
+                    
+                    //add new dependencies, if necessary
+                    if(find(exclusiveSchIds->begin(),exclusiveSchIds->end(),k) == exclusiveSchIds->end()){
+                        //cout << "addlockdependencies: "<< schedule[k] << endl;
+                        (tseg->dependencies).push_back(k);
+                        exclusiveSchIds->push_back(k); //add unlock id to exclusive
+                    }
                     break; //found corresponding unlock
                 }
             }
@@ -437,7 +444,8 @@ void computeSingleSegment(const vector<string>& schedule, vector<ThreadSegment>*
     tseg.tid = prevTid;
     
     //check if the current block comprises operations with dependencies
-    for(int dit = dependIt; dit < exclusiveSchIds->size(); dit++) // check if there are exclusive operations (position) that compreend the segment borders (init and end)
+    int exsize = exclusiveSchIds->size();
+    for(int dit = dependIt; dit < exsize; dit++) // check if there are exclusive operations (position) that compreend the segment borders (init and end)
     {
         dependIt = dit;
         
@@ -697,7 +705,7 @@ void cutOffOrphans( vector<ThreadSegment>* segsFail, vector<ThreadSegment>* segs
             //we don't want to print the failure and exit operations
             if(op.find("Assert")!=string::npos
                || op.find("exit")!=string::npos){
-               fit = segsFail->erase(fit);
+                fit = segsFail->erase(fit);
             }
             else
                 fit++;
@@ -890,7 +898,7 @@ string graphgen::cleanCallFunc(string funcSign)
     int classSymb = (int)funcSign.find("::");
     if(classSymb!= string::npos)
         funcSign = funcSign.substr(classSymb+2);
-
+    
     funcSign = funcSign.substr(0,funcSign.find("("));
     vector<string> funcType_funcName= splitVars(funcSign);
     string funcName = funcType_funcName.back();
@@ -940,7 +948,7 @@ string makeInstrFriendly(string instruction){
     int isOSlock = (int)instruction.find("OS-lock");
     int isOSunlock = (int)instruction.find("OS-unlock");
     string friendlyInstr = instruction;
-   
+    
     if(string::npos != filenameP && string::npos != lineP)
     {
         string filename = getFilenameOp(friendlyInstr);
@@ -972,7 +980,7 @@ string cleanInitSpacesOp(string ret)
     if(ret == "")
         return "";
     
-     //for some reason (probably to allow flushing the buffer read from the grep process), this is necessary to avoid misreading the line
+    //for some reason (probably to allow flushing the buffer read from the grep process), this is necessary to avoid misreading the line
     sleep(1);
     ret = ret.substr(ret.find_first_of("1234567890")); //remove de /x01 caracter
     
@@ -1010,7 +1018,7 @@ string cleanInitSpacesOp(string ret)
     else {
         pos = ret.find("/*");
         if(pos!=string::npos){
-           ret = ret.substr(0,pos);
+            ret = ret.substr(0,pos);
         }
     }
     
@@ -1157,7 +1165,7 @@ void drawAllSegments(ofstream &outFile, vector<ThreadSegment> segsSch, vector<st
         for(int j = seg.initPos; j <= seg.endPos; j++)
         {
             string op = schedule[j];
-            cout << op << endl;
+            //cout << op << endl;
             //we don't want to print the failure and exit operations
             int finalPositionOp = (int) op.find("&");
             if(op.substr(0,finalPositionOp).find ("Assert")!=string::npos // a problem occurred when e.g.: the filename was "simpleAssert"
