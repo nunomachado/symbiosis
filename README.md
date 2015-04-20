@@ -21,3 +21,14 @@ $ make
 $ cd SymbiosisSolver
 $ make
 ```
+
+### Example: Crasher
+* Compile and run instrumented version 
+```
+$ cd Tests/CTests/crasher 
+$ make Run
+$ export SYMBTRACE=$PWD/crasher.trace
+$ export LD_LIBRARY_PATH=/path/to/SymbiosisRuntime
+$ ./CrasherRUN_inst
+```
+This will create a trace file with extension either **.ok** (in case of a successful execution) or **.fail** (in case of a failing execution). 
