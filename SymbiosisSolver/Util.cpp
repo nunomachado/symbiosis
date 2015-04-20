@@ -10,19 +10,80 @@
 #include "Parameters.h"
 #include <sstream>
 #include <string>
-#include <iostream>
+//#include <iostream>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fstream>
+
 
 #define READ 0
 #define WRITE 1
 
 using namespace std;
 
-//transforms an int into a string
+//write map values to a file
+void util::saveVarValues2File(std::string filename, std::map<std::string, std::string> mapValues)
+{
+    ofstream outFile;
+    outFile.open(filename, ios::trunc);
+    if(!outFile.is_open())
+    {
+        cerr << " -> Error opening file "<< filename <<".\n";
+        outFile.close();
+        exit(1);
+    }
+    cout << "Saving Map Structure to file: " << filename << "\n";
+    
+    for(map<string,string>::iterator it= mapValues.begin(); it!= mapValues.end();it++)
+    {
+        outFile << it->first << endl;
+        outFile << it->second << endl;
+    }    outFile.close();
+    
+}
+
+//read map values from a file
+std::map<std::string, std::string> util::loadVarValuesFromFile(std::string filename)
+{
+    map<string, string> mapValues;
+    string first_var;
+    string second_value;
+    ifstream inSol(filename);
+    if(!inSol.is_open())
+    {
+        cerr << " -> Error opening file "<< filename << endl;
+        inSol.close();
+        exit(1);
+    }
+    cout << "Loading Map Structure from file: " << filename << endl;
+    string lineSol;
+    while (getline(inSol, lineSol))
+    {
+        first_var = lineSol;
+        getline(inSol, lineSol);
+        second_value = lineSol;
+        mapValues.insert(pair<string,string>(first_var,second_value));
+    }
+    inSol.close();
+    return mapValues;}
+
+
+
+//add 3x(thread_ID) to a better Pretty Print
+string util::threadTabsPP(int tab)
+{
+    string str = "";
+    for(int j = 0; j < tab ; j++) //print the number of tabs
+    {
+        str = str+"\t\t\t";
+    }
+    return str;
+}
+
+//transforms a int into a string
 string util::stringValueOf(int i)
 {
     stringstream ss;
@@ -56,7 +117,7 @@ pid_t util::popen2(const char *command, int *infp, int *outfp)
     
     if (pipe(p_stdin) != 0 || pipe(p_stdout) != 0)
     {
-        cout << "pipe(p_stdin) = " << pipe(p_stdin) << "\tpipe(p_stdout) = " << pipe(p_stdout) << "\n";
+        cout << "pipe(p_stdin) = " << pipe(p_stdin) << "\tpipe(p_stdout) = " << pipe(p_stdout) << endl;
         perror(">> Error creating the pipe");
         exit(EXIT_FAILURE);
         return -1;
@@ -164,23 +225,25 @@ bool util::isClosedExpression(string expr)
     
 }
 
-std::string util::parseThreadId(std::string op)
-{
-    size_t init, end;
-    end = op.find_last_of("-");
-    init = op.find_last_of("-",end-1)+1;
-    string tid = op.substr(init,end-init);
-    
-    //account for operations without variable id
-    if(tid.length() > 3)
-    {
-        end = op.find_first_of("@");
-        init = op.find_last_of("-")+1;
-        tid = op.substr(init,end-init);
-    }
-    
-    return tid;
-}
+/*
+ //returne ThreadID from a string
+ string util::getTid(std::string op)
+ {
+ size_t init, end;
+ end = op.find_last_of("-");
+ init = op.find_last_of("-",end-1)+1;
+ string tid = op.substr(init,end-init);
+ 
+ //account for operations without variable id
+ if(tid.length() > 3)
+ {
+ end = op.find_first_of("&");
+ init = op.find_last_of("-")+1;
+ tid = op.substr(init,end-init);
+ }
+ 
+ return tid;
+ }*/
 
 std::string util::parseVar(std::string op)
 {
@@ -190,8 +253,8 @@ std::string util::parseVar(std::string op)
     init = op.find_last_of("_")+1;
     end = op.find_first_of("-",init);
     var = op.substr(init,end-init);
-    //cout << "1: " << var << "\n";
-   
+    //cout << "1: " << var << endl;
+    
     //for JPF, the address might be the same for different variables (?), so we have to parse the var name as well
     //naive way of checking whether we are in jpfmode: count the length of the var
     if(var.length() < 4)
@@ -201,12 +264,12 @@ std::string util::parseVar(std::string op)
         end = op.find_first_of("-",init);
         //** uncomment this in order not to parse the var id
         /*end = op.find_first_of("_",init);
-        if(init == end){
-            end = op.find_first_of("_",init+1);
-        }*/
+         if(init == end){
+         end = op.find_first_of("_",init+1);
+         }*/
         
         var = op.substr(init,end-init);
     }
-    //cout << "2: " << var << "\n";
+    //cout << "2: " << var << endl;
     return var;
 }

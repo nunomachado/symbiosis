@@ -6,10 +6,22 @@
 //  Copyright (c) 2013 Nuno Machado. All rights reserved.
 //
 
-#ifndef snorlaxsolver_Operations_h
-#define snorlaxsolver_Operations_h
+//#ifndef snorlaxsolver_Operations_h
+//#define snorlaxsolver_Operations_h
+
+#ifndef __symbiosisSolver__Operations__
+#define __symbiosisSolver__Operations__
 
 #include <string>
+#include <map>
+
+namespace operationLIB{
+    
+    std::string parseThreadId(std::string operation);       //parses the threadId of an operation
+    std::string parseOperation(std::string operation);       //parses the operation
+}
+
+
 
 class Operation {
     protected:
@@ -22,6 +34,7 @@ class Operation {
     public:
     Operation();
     Operation(std::string tid, std::string variable, int varid, int srcline, std::string filename);
+    Operation(std::string tid, int id);
     
     std::string getThreadId();
     std::string getVariableName();
@@ -40,6 +53,25 @@ class Operation {
 
 };
 
+
+class CallOperation : public Operation{
+    
+    protected:
+    int _srcLine;
+    int _destLine;
+    std::string _srcFilename;
+    std::string _destFilename;
+    std::map< std::string, std::string > _bindingPair;
+    
+    public:
+    CallOperation();
+    CallOperation(std::string tid, int id, int srcLine, int destLine, std::string srcFilename, std::string destFilename);
+    
+    std::string getConstraintName();
+    std::string getOrderConstraintName();
+    void print();
+    
+};
 
 class RWOperation : public Operation{
     protected:
@@ -70,7 +102,6 @@ class PathOperation : public Operation{
     PathOperation();
     PathOperation(std::string tid, std::string variable, int varid, int srcline, std::string filename, std::string exp);
     void print();
-    
     std::string getExpression();
     void setExpression(std::string exp);
 };
@@ -114,7 +145,6 @@ class SyncOperation : public Operation{
     std::string getOrderConstraintName();
     void print();
 };
-
 
 #endif
 

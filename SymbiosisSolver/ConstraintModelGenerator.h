@@ -6,8 +6,11 @@
 //  Copyright (c) 2014 Nuno Machado. All rights reserved.
 //
 
-#ifndef __snorlaxsolver__ConstraintModelGenerator__
-#define __snorlaxsolver__ConstraintModelGenerator__
+//#ifndef __snorlaxsolver__ConstraintModelGenerator__
+//#define __snorlaxsolver__ConstraintModelGenerator__
+
+#ifndef __symbiosisSolver__ConstraintModelGenerator__
+#define __symbiosisSolver__ConstraintModelGenerator__
 
 #include <iostream>
 #include <map>

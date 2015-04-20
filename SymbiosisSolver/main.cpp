@@ -17,16 +17,15 @@
 #include <stack>
 #include <dirent.h>
 #include <algorithm>
-
 #include "Operations.h"
 #include "ConstraintModelGenerator.h"
 #include "Util.h"
 #include "Types.h"
 #include "Parameters.h"
 #include "GraphvizGenerator.h"
+#include "Schedule.h"
 
 using namespace std;
-
 
 
 map<string, vector<RWOperation> > readset;              //map var id -> vector with variable's read operations
@@ -42,7 +41,6 @@ vector<SyncOperation> syncset;
 vector<PathOperation> pathset;
 map<string, map<string, stack<LockPairOperation> > > lockpairStack;   //map object id -> (map thread id -> stack with incomplete locking pairs)
 int numIncLockPairs = 0;    //number of incomplete locking pairs, taking into account all objects
-map<string, vector<Operation*> > operationsByThread;    //map thread id -> vector with thread's operations
 map<string, vector<string> > symTracesByThread;         //map thread id -> vector with the filenames of the symbolic traces
 vector<string> solution;                                //vector that stores a given schedule (i.e. solution) found by the solver (used in --fix-mode)
 
@@ -73,16 +71,19 @@ void parse_args(int argc, char *const* argv)
             {"with-solver", required_argument, 0, 's'},
             {"model", required_argument, 0, 'm'},
             {"solution", required_argument, 0, 'l'},
+            {"source", required_argument, 0, 'i'},
             {"debug", no_argument, 0, 'd'},
             {"fix-mode", no_argument, 0, 'f'},
+            {"dsp", required_argument, 0, 'u'},
+            {"csr", no_argument, 0, 'r'},
+            {"", }
            
-            {0, 0, 0, 0}
+            
         };
         /* getopt_long stores the option index here. */
         int option_index = 0;
         
         c = getopt_long(argc, argv, "", long_options, &option_index);
-        
         
         /* Detect the end of the options. */
         if (c == -1)
@@ -101,6 +102,9 @@ void parse_args(int argc, char *const* argv)
             case 'c':
                 symbFolderPath = optarg;
                 break;
+            case 'i':
+                sourceFilePath = optarg;
+                break;
                 
             case 's':
                 solverPath = optarg;
@@ -116,6 +120,12 @@ void parse_args(int argc, char *const* argv)
                 
             case 'f':
                 bugFixMode = true;
+                break;
+            case 'u':
+                dspFlag = optarg; // extended, short, can be also empty
+                break;
+            case 'r':
+                csr = true; // context switch reduction
                 break;
                 
             /*case 'r':
@@ -141,6 +151,12 @@ void parse_args(int argc, char *const* argv)
         exit(1);
     }
     
+    if(bugFixMode && dspFlag!="extended" && dspFlag!="short" && dspFlag!="")
+    {
+        cerr << "Unknow argument for --dsp\nUsage: --dsp=\"extended\", \"short\" or \"\" to have different DSP views\n";
+        exit(1);
+    }
+    
     if(bugFixMode && (formulaFile.empty() || solutionFile.empty() || solverPath.empty()))
     {
         cerr << "Not enough arguments for bugFixMode.\nUsage: --model=/path/to/input/constraint/model\n--solution=/path/to/input/solution\n--with-solver=/path/to/solver/executable\n";
@@ -158,13 +174,19 @@ void parse_args(int argc, char *const* argv)
     else
         cout << "# MODE: FIND BUG-TRIGGERING SCHEDULE\n";
     
-     if(!avisoFilePath.empty()) cout << "# AVISO TRACE: " << avisoFilePath << "\n";
-     if(!symbFolderPath.empty()) cout << "# SYMBOLIC TRACES: " << symbFolderPath << "\n";
-     cout << "# SOLVER: " << solverPath << "\n";
-     cout << "# CONSTRAINT MODEL: " << formulaFile << "\n";
-     cout << "# SOLUTION: " << solutionFile << "\n";
+    if(csr && !bugFixMode)
+        cout << "# CONTEXT SWITCH REDUCTION: on"   << endl;
+    if(!csr && !bugFixMode)
+        cout << "# CONTEXT SWITCH REDUCTION: off"   << endl;
     
-    cout << "\n";
+    cout << "# DSP:" << dspFlag <<"\t\t(options = extended, short, \"\")" << endl;
+    
+    if(!avisoFilePath.empty()) cout << "# AVISO TRACE: " << avisoFilePath << endl;
+    if(!symbFolderPath.empty()) cout << "# SYMBOLIC TRACES: " << symbFolderPath << endl;
+    cout << "# SOLVER: " << solverPath << endl;
+    cout << "# CONSTRAINT MODEL: " << formulaFile << endl;
+    cout << "# SOLUTION: " << solutionFile << endl;
+    cout << endl;
 }
 
 /**
@@ -182,6 +204,7 @@ void parse_constraints(string symbFilePath)
     string obj;
     string var;
     int varId;
+    int callCounter = 0;
     
     map<string, int> varIdCounters; //map var name -> int counter to uniquely identify the i-th similar operation
     map<string, int> reentrantLocks; //map lock obj -> counter of reentrant acquisitions (used to differentiate reentrant acquisitions of the same lock)
@@ -194,10 +217,10 @@ void parse_constraints(string symbFilePath)
         util::print_state(fin);
         cerr << " -> Error opening file "<< symbFilePath <<".\n";
         fin.close();
-        exit(0);
+        exit(1);
     }
     
-    std::cout << ">> Parsing " << util::extractFileBasename(symbFilePath) << "\n";
+    std::cout << ">> Parsing " << util::extractFileBasename(symbFilePath) << endl;
     
     // read each line of the file
     while (!fin.eof())
@@ -207,7 +230,7 @@ void parse_constraints(string symbFilePath)
 		fin.getline(buf, MAX_LINE_SIZE); 
         char* token;
         string event = buf;
-        
+        //cout << "-> "<< event << endl;
         switch (buf[0]) {
             case '<':
                 token = strtok (buf,"<>");
@@ -251,8 +274,11 @@ void parse_constraints(string symbFilePath)
                 if(tmp.back() == '$')
                 {
                     token = strtok (buf,"$"); //token is the written value
-                    if(token == NULL)
-                        token = "0";
+                    if(token == NULL){
+                        //token = "0";
+                        token[0] = '0';
+                        token[1] = '\0';
+                    }
                     RWOperation* op = new RWOperation(threadId, var, 0, line, filename, token, true);
                     
                     //update variable id
@@ -269,9 +295,11 @@ void parse_constraints(string symbFilePath)
                     
                     writeset[var].push_back(*op);
                     operationsByThread[threadId].push_back(op);
+                    
                 }
                 else
                 {
+                    //cout << tmp << endl;
                     tmp.erase(0,1); //erase first '$'
                     string value = "";
                     while(tmp.back() != '$')
@@ -347,9 +375,35 @@ void parse_constraints(string symbFilePath)
                 filename = token;
                 token = strtok (NULL,"-:");
                 line = atoi(token);
-                token = strtok (NULL,"-:"); //token = type (S,R, or W)
                 
-                if(!strcmp(token,"S"))  //handle sync constraints
+                token = strtok (NULL,"-:"); //token = type (S,R, or W)
+                //########## HEAD
+                if(!strcmp(token,"CS"))
+                {
+                    callCounter++;
+                    varId = callCounter;
+                    
+                    token = strtok (NULL,"-\n");
+                    threadId = token;
+                    string scrFilename = filename;
+ 
+                    int scrLine = line;
+                    
+                    //Get CodeDestiny
+                    fin.getline(buf, MAX_LINE_SIZE);
+                    //char* token2;
+                    string event = buf;
+                    
+                    token = strtok(buf,"@");
+                    string destFilename = token;
+                    token = strtok(NULL,"-:");
+                    int destLine = atoi(token);
+                    
+                    CallOperation* op = new CallOperation(threadId, varId, scrLine, destLine, scrFilename, destFilename);
+                    
+                    operationsByThread[threadId].push_back(op);
+                }
+                else if(!strcmp(token,"S"))  //handle sync constraints
                 {
                     token = strtok (NULL,"-_");
                     syncType = token;
@@ -549,8 +603,8 @@ void parse_constraints(string symbFilePath)
                         }
                         
                         //as the wait operations release and acquire locks internally, we also have to account for that behavior
-                        vector<Operation*> tmpvec = operationsByThread[threadId];
-                        for(vector<Operation*>::reverse_iterator in = tmpvec.rbegin(); in!=tmpvec.rend(); ++in)
+                        Schedule tmpvec = operationsByThread[threadId];
+                        for(Schedule::reverse_iterator in = tmpvec.rbegin(); in!=tmpvec.rend(); ++in)
                         {
                             SyncOperation* lop = dynamic_cast<SyncOperation*>(*in);
                             if(lop!=0 && lop->getType() == "lock")
@@ -729,7 +783,7 @@ void parse_constraints(string symbFilePath)
     //add non-closed locking pairs to lockpairset
     while(numIncLockPairs > 0)
     {
-        for(vector<Operation*>::reverse_iterator rit = operationsByThread[threadId].rbegin();
+        for(Schedule::reverse_iterator rit = operationsByThread[threadId].rbegin();
             rit != operationsByThread[threadId].rend() && numIncLockPairs > 0; ++rit)
         {
             SyncOperation* tmplop = dynamic_cast<SyncOperation*>(*rit);
@@ -797,7 +851,7 @@ void parse_avisoTrace()
         util::print_state(fin);
         cout << " -> Error opening file "<< avisoFilePath <<".\n";
         fin.close();
-        exit(0);
+        exit(1);
     }
     
     // read each line of the file
@@ -821,7 +875,7 @@ void parse_avisoTrace()
             token = strtok (NULL," :"); //token == line of code
             aetmp.loc = atoi(token);
             
-            //cout << "TID: " << aetmp.tid << " Filename: " << aetmp.filename << " Loc: "<< aetmp.loc << "\n";
+            //cout << "TID: " << aetmp.tid << " Filename: " << aetmp.filename << " Loc: "<< aetmp.loc << endl;
             
             atrace[aetmp.tid].push_back(aetmp);
             fulltrace.push_back(aetmp);
@@ -835,9 +889,9 @@ void parse_avisoTrace()
         cout<< "\n### AVISO TRACE\n";
         
         for (unsigned i = 0; i < fulltrace.size(); i++) {
-            cout << "[" << fulltrace[i].tid << "] " << util::extractFileBasename(fulltrace[i].filename) << "@" << fulltrace[i].loc << "\n";
+            cout << "[" << fulltrace[i].tid << "] " << util::extractFileBasename(fulltrace[i].filename) << "@" << fulltrace[i].loc << endl;
         }
-        cout << "\n";
+        cout << endl;
     }
 }
 
@@ -879,6 +933,24 @@ bool verifyConstraintModel(ConstModelGen *cmgen)
     cout << "\n### SOLVING CONSTRAINT MODEL: Z3\n";
     success = cmgen->solve();
     
+    if(success)
+    {
+        cout<< "\n\nOLD SCH" << endl;
+        scheduleLIB::printSch(failScheduleOrd);
+        
+        //bool useCSR = true;
+        Schedule simpleSch;
+        
+        if(csr){
+            simpleSch = scheduleLIB::scheduleSimplify(failScheduleOrd,cmgen);
+            cout<< "\n\nNEW SCH" << endl;
+            scheduleLIB::printSch(failScheduleOrd);
+        }
+        else
+            simpleSch = failScheduleOrd;
+        scheduleLIB::saveScheduleFile(solutionFile,scheduleLIB::schedule2string(simpleSch));
+    }
+    
     //** clean data structures
     cmgen->resetSolver();
     readset.clear();
@@ -905,7 +977,7 @@ bool verifyConstraintModel(ConstModelGen *cmgen)
  */
 bool updateCounters(vector<string> keys, vector<int> *traceCounterByThread)
 {
-    for(int i = keys.size()-1; i>=0; i--)
+    for(int i = (int)keys.size()-1; i>=0; i--)
     {
         string tid = keys[i];
         if((*traceCounterByThread)[i] < symTracesByThread[tid].size()-1)
@@ -964,7 +1036,7 @@ void generateConstraintModel()
             {
                 char filename[250];
                 strcpy(filename, hFile->d_name);
-               // std::cerr << "found a symbolic trace file: " << filename << "\n";
+               // std::cerr << "found a symbolic trace file: " << filename << endl;
                 
                 //** extract the thread id to serve as key in the map
                 string tid = filename;
@@ -1001,7 +1073,7 @@ void generateConstraintModel()
     
     do
     {
-        std::cout << "\n---- ATTEMPT " << attempts << "\n";
+        std::cout << "\n---- ATTEMPT " << attempts << endl;
         
         //** pick one symbolic trace per thread
         for(int i = 0; i < keys.size(); i++)
@@ -1087,20 +1159,20 @@ void generateConstraintModel()
             if(!syncset.empty())
             {
                 cout<< "\n-- OTHER SYNC SET\n";
-                for(vector<SyncOperation>::iterator it = syncset.begin() ; it!=syncset.end(); ++it)
+                for(vector<SyncOperation>::iterator it = syncset.begin(); it!=syncset.end(); ++it)
                     it->print();
             }
             
             cout<< "\n-- PATH SET\n";
-            for(vector<PathOperation>::iterator it = pathset.begin() ; it!=pathset.end(); ++it)
+            for(vector<PathOperation>::iterator it = pathset.begin(); it!=pathset.end(); ++it)
                 it->print();
             
             cout<< "\n### OPERATIONS BY THREAD\n";
-            for (map<string, vector<Operation*> >::iterator it=operationsByThread.begin(); it!=operationsByThread.end(); ++it)
+            for (map<string, Schedule >::iterator it=operationsByThread.begin(); it!=operationsByThread.end(); ++it)
             {
-                cout << "-- Thread " << it->first <<"\n";
-                vector<Operation*> tmpvec = it->second;
-                for(vector<Operation*>::iterator in = tmpvec.begin(); in!=tmpvec.end(); ++in)
+                cout << "-- Thread " << it->first << endl;
+                Schedule tmpvec = it->second;
+                for(Schedule::iterator in = tmpvec.begin(); in!=tmpvec.end(); ++in)
                 {
                     (*in)->print();
                 }
@@ -1131,7 +1203,7 @@ vector<EventPair> generateEventPairs(map<string, int> mapOpToId, vector<string> 
     for(vector<string>::iterator it = opsToInvert.begin(); it!=opsToInvert.end();++it)
     {
         string op1 = *it;
-        string tid1 = util::parseThreadId(op1);
+        string tid1 = operationLIB::parseThreadId(op1);
         string var1 = util::parseVar(op1);
         Segment seg1 = std::make_pair(mapOpToId[op1],mapOpToId[op1]);
         
@@ -1142,7 +1214,7 @@ vector<EventPair> generateEventPairs(map<string, int> mapOpToId, vector<string> 
         for(i = mapOpToId[op1]; i > 0; i--)
         {
             string op2 = solution[i];
-            string tid2 = util::parseThreadId(op2);
+            string tid2 = operationLIB::parseThreadId(op2);
             
             if(op2.find("-lock")!=std::string::npos && tid2 == tid1)
             {
@@ -1177,7 +1249,7 @@ vector<EventPair> generateEventPairs(map<string, int> mapOpToId, vector<string> 
         {
             int pos = unsatCore[i];
             string op2 = solution[pos];
-            string tid2 = util::parseThreadId(op2);
+            string tid2 = operationLIB::parseThreadId(op2);
             
             //** disregard events of the same thread, as well as exits/joins
             if(tid1 == tid2
@@ -1243,11 +1315,11 @@ vector<string> generateNewSchedule(EventPair invPair)
     //parse A's thread id
     string opA = solution[i];
     size_t init, end;
-    string tidA = util::parseThreadId(opA);
+    string tidA = operationLIB::parseThreadId(opA);
     
     //parse B's thread id
     string opB = solution[invPair.second.first];
-    string tidB = util::parseThreadId(opB);
+    string tidB = operationLIB::parseThreadId(opB);
     
     for(j = i; j < solution.size(); j++)
     {
@@ -1259,7 +1331,7 @@ vector<string> generateNewSchedule(EventPair invPair)
         
         //parse op thread id
         string opC = solution[j];
-        string tidC = util::parseThreadId(opC);
+        string tidC = operationLIB::parseThreadId(opC);
         
         //** we don't want to reorder the events of the other threads (Nuno: we're not doing this at the moment)
         if(tidC!=tidB)//if(tidA == tidB)
@@ -1331,11 +1403,10 @@ vector<string> generateNewSchedule(EventPair invPair)
  *  the new model is sat, then it means that we found the root cause.
  *  Otherwise, simply attempt with another pair.
  */
-void findBugRootCause()
+bool findBugRootCause(map<EventPair, vector<string>>* altSchedules, vector<string>* solutionRetriver)
 {
     map<string, int> mapOpToId; //map: operation name -> id in 'solution' array
-    map<EventPair, vector<string> > altSchedules; //set used to store the event pairs that yield a sat non-failing alternative schedule
-    bool success; //indicates whether we have found a bug-avoiding schedule
+    bool success= false; //indicates whether we have found a bug-avoiding schedule
     int numAttempts = 0; //counts the number of attempts to find a sat alternate schedule
     
     ConstModelGen* cmgen = new ConstModelGen();
@@ -1383,7 +1454,7 @@ void findBugRootCause()
     for(int i = 0; i<unsatCore.size();i++)
     {
         string op = solution[unsatCore[i]];
-        cout << op << "\n";
+        cout << op << endl;
         mapOpToId[op] = unsatCore[i];
     }
     
@@ -1391,7 +1462,7 @@ void findBugRootCause()
     for(int i = 0; i < bugCondOps.size(); i++)
     {
         string bop = bugCondOps[i];
-        cout << bop <<"\n";
+        cout << bop << endl;
         
         //find the position of each op in the bug condition in the solution array
         for(int j = 0; j<solution.size();j++)
@@ -1420,7 +1491,7 @@ void findBugRootCause()
         vector<string> newSchedule = generateNewSchedule(invPair);
         
         cout << "\n------------------------\n";
-        cout << "["<< ++numAttempts <<"] Attempt by inverting pair:\n" << pairToString(invPair, solution) << "\n";
+        cout << "["<< ++numAttempts <<"] Attempt by inverting pair:\n" << pairToString(invPair, solution) << endl;
         
         bugCondOps.clear(); //clear bugCondOps to avoid getting repeated operations
         
@@ -1429,7 +1500,7 @@ void findBugRootCause()
         {
             cout << "\n>> FOUND BUG AVOIDING SCHEDULE:\n" << bugCauseToString(invPair, solution);
             //altSchedules[invPair] = bugCore;
-            altSchedules[invPair] = newSchedule;
+            (*altSchedules)[invPair] = newSchedule;
             break;
         }
     }
@@ -1455,7 +1526,7 @@ void findBugRootCause()
                 //store operation if its a read on the same var that of the Op in the bug condition
                 if(svar == bvar && sop.find("R-")!=string::npos)
                 {
-                    cout << sop << "\n";
+                    cout << sop << endl;
                     opsToInvert.push_back(sop);
                     mapOpToId[sop] = j;
                 }
@@ -1474,7 +1545,7 @@ void findBugRootCause()
             vector<string> newSchedule = generateNewSchedule(invPair);
             
             cout << "\n------------------------\n";
-            cout << "["<< ++numAttempts <<"] Attempt by inverting pair:\n" << pairToString(invPair, solution) << "\n";
+            cout << "["<< ++numAttempts <<"] Attempt by inverting pair:\n" << pairToString(invPair, solution) << endl;
             
             bugCondOps.clear(); //clear bugCondOps to avoid getting repeated operations
             
@@ -1483,45 +1554,48 @@ void findBugRootCause()
             {
                 cout << "\n>> FOUND BUG AVOIDING SCHEDULE:\n" << bugCauseToString(invPair, solution);
                 //altSchedules[invPair] = bugCore;
-                altSchedules[invPair] = newSchedule;
+                (*altSchedules)[invPair] = newSchedule;
                 break;
             }
         }
     }
-    
-    //print data-dependencies and stats only when Symbiosis has found an alternate schedule
-    if(success)
-    {
-        //** compute data dependencies
-        cout << "=======================================\n";
-        cout << "DATA DEPENDENCIES: \n\n";
-        
-        graphgen::genAllGraphSchedules(solution,altSchedules);
-        
-        cout << "=======================================\n";
-        cout << "STATISTICS: \n";
-        cout << "\n#Events in the full failing schedule: " << solution.size();
-        cout << "\n#Events in the unsat core: " << unsatCore.size();
-        cout << "\n#Events in the diff-debug schedule: " << numEventsDifDebug;
-        cout << "\n#Data-dependencies in the full failing schedule: " << numDepFull;
-        cout << "\n#Data-dependencies in the diff-debug schedule: " << numDepDifDebug << "\n";
-    }
-    
+    *solutionRetriver = solution;
+    return success;
 }
+
 
 int main(int argc, char *const* argv)
 {
     parse_args(argc, argv);
-    if(bugFixMode)
-    {
-        findBugRootCause();
-    }
-    else
+    
+    map<EventPair, vector<string> > altSchedules; //set used to store the event pairs that yield a sat non-failing alternative schedule
+    vector<string> solution ;
+    if(!bugFixMode)
     {
         //parse_avisoTrace();
         generateConstraintModel();
+        /*for(map<string,string>::iterator it = solutionValues.begin();it!= solutionValues.end();it++){
+            cout << it->first << " : " << it-> second << endl;
+        }*/
+        
+        //save variable values to file
+        util::saveVarValues2File(sourceFilePath+("Values.txt"),solutionValues);
     }
-    
+    else
+    {
+        //load variable values from file
+        solutionValuesFail = util::loadVarValuesFromFile(sourceFilePath+"Values.txt");
+        
+        //findBug
+        bool success = findBugRootCause(&altSchedules, &solution);
+        if(success) //print data-dependencies and stats only when Symbiosis has found an alternate schedule
+        {
+            solutionValuesAlt = solutionValues;
+            graphgen::drawAllGraph(altSchedules, solution);
+        }
+        
+        solutionFile.insert(solutionFile.find(".txt"),"ALT");
+        scheduleLIB::saveScheduleFile(solutionFile,altScheduleOrd); //save solution schedule
+    }
     return 0;
 }
-

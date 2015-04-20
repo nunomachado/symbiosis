@@ -6,12 +6,16 @@
 //  Copyright (c) 2014 Nuno Machado. All rights reserved.
 //
 
-#ifndef __snorlaxsolver__Z3Solver__
-#define __snorlaxsolver__Z3Solver__
+//#ifndef __snorlaxsolver__Z3Solver__
+//#define __snorlaxsolver__Z3Solver__
+
+#ifndef __symbiosisSolver__Z3Solver__
+#define __symbiosisSolver__Z3Solver__
 
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include "Parameters.h"
 
 
 class Z3Solver {

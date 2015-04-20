@@ -31,6 +31,12 @@ Operation::Operation(string tid, string variable, int varid, int srcline, string
     filename = f;
 }
 
+Operation::Operation(string tid, int idOp)
+{
+    threadId = tid;
+    id = idOp;
+};
+
 string Operation::getThreadId(){
     return threadId;
 }
@@ -73,7 +79,7 @@ void Operation::setFilename(string f){
 
 void Operation::print()
 {
-    cout << "[" << threadId << "] Op-" << var << "-" << id << "@" << line << "\n";
+    cout << "[" << threadId << "] Op-" << var << "-" << id << "&" << filename << "@" << line << endl;
 }
 
 string Operation::getOrderConstraintName()
@@ -85,6 +91,40 @@ string Operation::getConstraintName()
 {
     return ("Op-" + var + "-" + threadId);
 }
+
+//** class CallOperation ***************
+CallOperation::CallOperation() : Operation(){};
+
+CallOperation::CallOperation(string tid, int id, int scrLine, int destLine, string scrFilename, string destFilename)
+: Operation(tid, id)
+{
+    _srcLine = scrLine;
+    _destLine = destLine;
+    _srcFilename = scrFilename;
+    _destFilename = destFilename;
+}
+
+string CallOperation::getConstraintName(){
+    string ret = "FunCall-" + threadId + "-" + util::stringValueOf(id) + "&"+ _srcFilename +"/"+ _destFilename +"@" + util::stringValueOf(_srcLine) + "/" + util::stringValueOf(_destLine);
+    return ret;
+}
+
+std::string CallOperation::getOrderConstraintName()
+{
+    string ret = "OC-FunCall-" + threadId + "-" + util::stringValueOf(id) + "&"+ _srcFilename +"/"+ _destFilename +"@" + util::stringValueOf(_srcLine) + "/" + util::stringValueOf(_destLine);
+    return ret;
+}
+
+void CallOperation::print()
+{
+    string varList="";
+    for(map<string, string>::iterator it = _bindingPair.begin(); it != _bindingPair.end(); it++)
+    {
+        varList = varList + (*it).first +" to "+(*it).second+" ";
+    }
+    cout << "[" << threadId << "] " << "FunCall_" << varList << "-" << id << "&" << _srcFilename <<";"<< _destFilename << "@" << _srcLine <<";"<<_destLine<< endl;
+}
+
 
 //** class RWOperation ***************
 RWOperation::RWOperation() : Operation(){}
@@ -117,7 +157,7 @@ string RWOperation::getConstraintName()
     string ret;
     if(isWrite)
     {
-        ret = "W-" + var + "-" + threadId + "-" + util::stringValueOf(id) + "@" + util::stringValueOf(line);
+        ret = "W-" + var + "-" + threadId + "-" + util::stringValueOf(id) + "&"+ filename +"@" + util::stringValueOf(line);
     }
     else
     {
@@ -131,11 +171,11 @@ string RWOperation::getOrderConstraintName()
     string ret;
     if(isWrite)
     {
-        ret = "OW-" + var + "-" + threadId + "-" + util::stringValueOf(id) + "@" + util::stringValueOf(line);
+        ret = "OW-" + var + "-" + threadId + "-" + util::stringValueOf(id) + "&"+ filename +"@" + util::stringValueOf(line);
     }
     else
     {
-        ret = "OR-" + var + "-" + threadId + "-" + util::stringValueOf(id) + "@" + util::stringValueOf(line);  //we must R-var-id as constraint name in order to conform with the path constraints
+        ret = "OR-" + var + "-" + threadId + "-" + util::stringValueOf(id) + "&"+ filename +"@" + util::stringValueOf(line);
     }
     return ret;
 }
@@ -152,7 +192,7 @@ string RWOperation::getInitialValueName()
 bool RWOperation::equals(RWOperation op)
 {
     bool ret = op.getConstraintName().compare(getConstraintName());
-    //cout << "equals --> " << op.getConstraintName() << " == " << getConstraintName() << " ? " << ret << "\n"; //debug
+    //cout << "equals --> " << op.getConstraintName() << " == " << getConstraintName() << " ? " << ret << endl; //debug
     return !ret;
 }
 
@@ -160,11 +200,11 @@ void RWOperation::print()
 {
     if(isWrite)
     {
-        cout << "[" << threadId << "] W-" << var << "-" << id <<" = $" << value << "$@" << line << "\n";
+        cout << "[" << threadId << "] W-" << var << "-" << id <<" = $" << value << "$&" << filename << "@" << line << endl;
     }
     else
     {
-        cout << "[" << threadId << "] R-" << var << "-" << id << "@" << line << "\n";
+        cout << "[" << threadId << "] R-" << var << "-" << id << "&" << filename << "@" << line << endl;
     }
 }
 
@@ -186,9 +226,8 @@ void PathOperation::setExpression(string exp){
     expr = exp;
 }
 
-void PathOperation::print()
-{
-    cout << "[" << threadId << "]: " << expr << "\n";
+void PathOperation::print(){
+    cout << "[" << threadId << "]: " << expr << endl;
 }
 
 //** class LockPairOperation ***************
@@ -218,8 +257,8 @@ int LockPairOperation::getUnlockVarId(){
 string LockPairOperation::getLockOrderConstraintName()
 {
     string ret;
-    ret = "OS-lock_" + var + "-" + threadId + "-" + util::stringValueOf(id) + "@" + util::stringValueOf(line);
-    
+    ret = "OS-lock_" + var + "-" + threadId + "-" + util::stringValueOf(id) + "&"+ filename + "@" + util::stringValueOf(line);
+    //OS-lock_       416680994     -1                  -0                      &SimpleAssertKLEE.c     @16
     return ret;
 }
 
@@ -227,9 +266,9 @@ string LockPairOperation::getUnlockOrderConstraintName()
 {
     string ret;
     if(fakeUnlock==true)
-        ret = "OS-unlockFake_" + var + "-" + threadId + "-" + util::stringValueOf(unlockVarId) + "@" + util::stringValueOf(unlockLine);
+        ret = "OS-unlockFake_" + var + "-" + threadId + "-" + util::stringValueOf(unlockVarId) + "&" + filename + "@" + util::stringValueOf(unlockLine);
     else
-        ret = "OS-unlock_" + var + "-" + threadId + "-" + util::stringValueOf(unlockVarId) + "@" + util::stringValueOf(unlockLine);
+        ret = "OS-unlock_"     + var + "-" + threadId + "-" + util::stringValueOf(unlockVarId) + "&" + filename + "@" + util::stringValueOf(unlockLine);
     
     return ret;
 }
@@ -255,7 +294,7 @@ bool LockPairOperation::isFakeUnlock(){
 
 void LockPairOperation::print()
 {
-    cout << "[" << threadId << "] " << var << "-" << id << "/"<< unlockVarId << " Lock@" << line << " Unlock@" << unlockLine << "\n";
+    cout << "[" << threadId << "] " << var << "-" << id << "/"<< unlockVarId << "&" << filename << "Lock@" << line << " Unlock@" << unlockLine << endl;
 }
 
 //** class SyncOperation ***************
@@ -282,10 +321,10 @@ string SyncOperation::getConstraintName()
     string ret;
     //ret = "S-" + type + "-" + threadId;
     if(var.empty()){
-        ret = "S-" + type + "-" + threadId + "@" + util::stringValueOf(line);
+        ret = "S-" + type + "-" + threadId + "&" +filename + "@" + util::stringValueOf(line);
     }
     else{
-        ret = "S-" + type + "_" + var + "-" + threadId + "-" + util::stringValueOf(id) + "@" + util::stringValueOf(line);
+        ret = "S-" + type + "_" + var + "-" + threadId + "-" + util::stringValueOf(id) + "&" +filename + "@" + util::stringValueOf(line);
     }
     return ret;
 }
@@ -295,10 +334,10 @@ string SyncOperation::getOrderConstraintName()
     string ret;
     
     if(var.empty()){
-        ret = "OS-" + type + "-" + threadId + "@" + util::stringValueOf(line);
+        ret = "OS-" + type + "-" + threadId + "&" +filename + "@" + util::stringValueOf(line);
     }
     else{
-        ret = "OS-" + type + "_" + var + "-" + threadId + "-" + util::stringValueOf(id) + "@" + util::stringValueOf(line);
+        ret = "OS-" + type + "_" + var + "-" + threadId + "-" + util::stringValueOf(id) + "&" +filename + "@" + util::stringValueOf(line);
     }
     
     return ret;
@@ -307,7 +346,34 @@ string SyncOperation::getOrderConstraintName()
 void SyncOperation::print()
 {
     if(var.empty())
-        cout << "[" << threadId << "] " << type << "@" << line << "\n";
+        cout << "[" << threadId << "] " << type << "&" << filename << "@" << line << endl;
     else
-        cout << "[" << threadId << "] " << type << "_" << var << "-" << id << "@" << line << "\n";
+        cout << "[" << threadId << "] " << type << "_" << var << "-" << id << "&" << filename << "@" << line << endl;
 }
+
+std::string operationLIB::parseThreadId(std::string op)
+{
+    int posBegin = (int)op.find_first_of("-", op.find_first_of("-") + 1)+1;
+    while(op.at(posBegin) == '>')
+        posBegin = (int)op.find_first_of("-", posBegin) + 1;
+    
+    //for read operations, we have to consider the readId as well
+    int posEnd = (int)op.find_first_of("-", posBegin);
+    int posEnd2 = (int)op.find_first_of("&", posBegin);
+    if(posEnd != string::npos)
+        return op.substr(posBegin, posEnd-posBegin);
+    
+    return op.substr(posBegin, posEnd2-posBegin);
+    
+}
+
+std::string operationLIB::parseOperation(std::string op)
+{   //OW-accounts_51-0-0&Bank.java@32
+    int posInit = (int)op.find_first_of("O");
+    op = op.substr(posInit+1);
+    int posEnd = (int)op.find_first_of("&");
+    op = op.substr(0,posEnd);
+    return op;
+
+}
+

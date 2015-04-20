@@ -41,3 +41,19 @@ std::string bugCauseToString(EventPair p, std::vector<std::string> solution)
     
     return ret;
 }
+
+std::string bugCauseToGviz(EventPair p, std::vector<std::string> solution)
+{
+    std::string ret;
+    
+    if(p.first.first!= p.first.second)
+        ret.append("["+solution[p.first.first]+ ".."+solution[p.first.second]+"]\\n should execute after\\n");
+    else
+        ret.append(solution[p.first.first]+"\\n should execute after \\n");
+    if(p.second.first!=p.second.second)
+        ret.append(" ["+ solution[p.second.first] +".."+ solution[p.second.second] +"]\\n\\n\\n");
+    else
+        ret.append(" "+solution[p.second.first] +"\\n\\n\\n");
+    
+    return ret;
+}
