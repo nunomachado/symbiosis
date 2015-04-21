@@ -1,0 +1,15 @@
+target=twostage.Main
+target_args=2,1
+classpath=/home/symbiosis/work/symbiosisJava/SymbiosisTransformer/SymbiosisJPF;\
+		  /home/symbiosis/work/symbiosisJava/jpf-symbiosis/build/main;\
+		  /home/symbiosis/work/symbiosisJava/jpf-core/build/main;\
+		  /home/symbiosis/work/symbiosisJava/jpf-symbc/build/main;
+sourcepath=/home/symbiosis/work/symbiosisJava/Tests
+symbolic.dp=no_solver
+#symbolic.string_dp=automata
+symbolic.string_dp_timeout_ms=0
+#vm.por.sync_detection=false
+listener=pt.tecnico.jpf.symbiosis.SymbiosisListener
+symbiosis.bbtrace=/home/symbiosis/work/symbiosisJava/SymbiosisRuntime/traces/twostage.Main.traceBB
+symbiosis.sharedAccesses=/home/symbiosis/work/symbiosisJava/SymbiosisTransformer/SymbiosisJPF/twostage.Main.accesses
+symbiosis.tracefolder=/home/symbiosis/work/symbiosisJava/jpf-symbiosis/traces/twostage/

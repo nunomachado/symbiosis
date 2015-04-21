@@ -1,0 +1,19 @@
+InstrumentationHandler.java@16:S-start-9
+airline.java@113:R-Num_Of_Seats_Sold_51-9-1
+airline.java@113:W-Num_Of_Seats_Sold_51-9-1
+$(R-Num_Of_Seats_Sold_51-9-1 + CONST_1)$
+airline.java@116:R-Num_Of_Seats_Sold_51-9-2
+airline.java@117:R-Num_Of_Seats_Sold_51-9-3
+airline.java@118:W-StopSales_593-9-1
+$1$
+<pathjpf>
+T9:(R-StopSales_593-0-1 == CONST_0)
+T9:(R-StopSales_593-0-2 == CONST_0 )
+T9:(R-StopSales_593-0-3 == CONST_0 )
+T9:(R-StopSales_593-0-4 == CONST_0 )
+T9:(R-StopSales_593-0-5 == CONST_0 )
+T9:(R-StopSales_593-0-6 == CONST_0 )
+T9:(R-StopSales_593-0-7 == CONST_0 )
+T9:(R-StopSales_593-0-8 == CONST_0 )
+T9:(R-StopSales_593-0-9 == CONST_0 )
+T9:(R-Num_Of_Seats_Sold_51-9-2 > CONST_5 )

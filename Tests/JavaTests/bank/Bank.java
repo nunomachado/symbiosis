@@ -84,7 +84,7 @@ public class Bank{
 	public static void Service(int id,int sum){
 		accounts[id].Balance += sum;
 		int tmp = Bank_Total;
-		//try{Thread.sleep(10);}catch(Exception e){} //Nuno: added this
+		try{Thread.sleep(10);}catch(Exception e){} //Nuno: added this
 		Bank_Total = sum + tmp;
 	}
 }

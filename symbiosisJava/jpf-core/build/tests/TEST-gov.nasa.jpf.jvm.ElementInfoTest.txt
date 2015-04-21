@@ -1,0 +1,10 @@
+Testsuite: gov.nasa.jpf.jvm.ElementInfoTest
+Tests run: 4, Failures: 0, Errors: 0, Time elapsed: 0.017 sec
+------------- Standard Output ---------------
+caught gov.nasa.jpf.JPFException: pinDown limit exceeded: ElementInfo@0, getPinDownCount() = 255
+------------- ---------------- ---------------
+
+Testcase: testPinDownCounter took 0.004 sec
+Testcase: testMarkedFlag took 0 sec
+Testcase: testMarkedOrAlive took 0 sec
+Testcase: testALiveFlag took 0 sec

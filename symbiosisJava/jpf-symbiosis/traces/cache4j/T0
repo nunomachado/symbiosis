@@ -1,0 +1,13 @@
+CacheCleaner.java@22:W-inTryBlock_592-0-1
+$0$
+CacheCleaner.java@23:W-sleeping_592-0-1
+$0$
+CacheCleaner.java@33:W-_sleep_592-0-1
+$0$
+CacheCleaner.java@43:W-_cleanInterval_592-0-1
+$200$
+Cache4jBugDriver.java@16:S-fork_1-0
+WorkerThread.java@13:W-cache_604-0-1
+$592$
+Cache4jBugDriver.java@25:S-fork_2-0
+Cache4jBugDriver.java@30:S-join_2-0

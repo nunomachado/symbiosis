@@ -1,0 +1,26 @@
+Bank.java@30:W-Bank_Total_51-0-1
+$0$
+Bank.java@32:W-accounts_51-0-1
+$596$
+Bank.java@38:R-accounts_51-0-1
+Account.java@11:W-Balance_600-0-1
+$0$
+Bank.java@38:R-accounts_51-0-2
+Account.java@11:W-Balance_618-0-1
+$0$
+Bank.java@45:R-accounts_51-0-3
+Bank.java@45:S-fork_1-0
+Bank.java@45:R-accounts_51-0-4
+Bank.java@45:S-fork_2-0
+Bank.java@50:R-accounts_51-0-5
+Bank.java@50:S-join_1-0
+Bank.java@50:R-accounts_51-0-6
+Bank.java@50:S-join_2-0
+Bank.java@60:R-accounts_51-0-7
+Bank.java@60:R-Balance_600-0-1
+Bank.java@60:R-accounts_51-0-8
+Bank.java@60:R-Balance_618-0-1
+Bank.java@64:R-Bank_Total_51-0-1
+Bank.java@65:R-Bank_Total_51-0-2
+<pathjpf>
+T0:(R-Bank_Total_51-0-2 != (R-Balance_618-0-1 + R-Balance_600-0-1))

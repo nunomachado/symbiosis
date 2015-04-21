@@ -1,0 +1,19 @@
+Testsuite: gov.nasa.jpf.jvm.StackFrameTest
+Tests run: 6, Failures: 0, Errors: 0, Time elapsed: 0.022 sec
+------------- Standard Output ---------------
+operands = [1 {1},2 {2},3 {3}]
+operands = [2 {2},3 {3},1 {1},2 {2},3 {3}]
+operands = [1,2,3,4]
+operands = [3,4,1,2,3,4]
+operands = [1 {1},2 {2},3 {3},4 {4}]
+operands = [3 {3},4 {4},1 {1},2 {2},3 {3},4 {4}]
+operands = [1,2,3]
+operands = [2,3,1,2,3]
+------------- ---------------- ---------------
+
+Testcase: testPushLong took 0.004 sec
+Testcase: testPushDouble took 0 sec
+Testcase: testDup2_x1_Attrs took 0.001 sec
+Testcase: testDup2_x2 took 0.001 sec
+Testcase: testDup2_x2_Attrs took 0 sec
+Testcase: testDup2_x1 took 0 sec

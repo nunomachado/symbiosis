@@ -1,0 +1,5 @@
+Testsuite: gov.nasa.jpf.jvm.AnnotationInfoTest
+Tests run: 2, Failures: 0, Errors: 0, Time elapsed: 0.049 sec
+
+Testcase: testIntArrayDefaultValue took 0.03 sec
+Testcase: testStringDefaultValue took 0.003 sec

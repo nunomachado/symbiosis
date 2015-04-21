@@ -28,7 +28,7 @@ public class TwoStage {
        }
 	    
        //reading may happen here, data will be inconsistent...
-	   try{Thread.currentThread().sleep(10);}catch(Exception e){} 
+	try{Thread.currentThread().sleep(10);}catch(Exception e){} 
        
        // This is the second stage, using the result of stage1 to calculate 
        synchronized (data2) {   		

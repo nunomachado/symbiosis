@@ -1,0 +1,84 @@
+InstrumentationHandler.java@16:S-start-2
+WorkerThread.java@20:R-cache_604-2-1
+CacheCleaner.java@60:W-_cleanInterval_592-2-1
+$0$
+CacheCleaner.java@62:S-lock_250-2
+CacheCleaner.java@63:R-_sleep_592-2-1
+CacheCleaner.java@62:S-unlock_250-2
+WorkerThread.java@20:R-cache_604-2-2
+CacheCleaner.java@60:W-_cleanInterval_592-2-2
+$1$
+CacheCleaner.java@62:S-lock_250-2
+CacheCleaner.java@63:R-_sleep_592-2-2
+CacheCleaner.java@62:S-unlock_250-2
+WorkerThread.java@20:R-cache_604-2-3
+CacheCleaner.java@60:W-_cleanInterval_592-2-3
+$2$
+CacheCleaner.java@62:S-lock_250-2
+CacheCleaner.java@63:R-_sleep_592-2-3
+CacheCleaner.java@62:S-unlock_250-2
+WorkerThread.java@20:R-cache_604-2-4
+CacheCleaner.java@60:W-_cleanInterval_592-2-4
+$3$
+CacheCleaner.java@62:S-lock_250-2
+CacheCleaner.java@63:R-_sleep_592-2-4
+CacheCleaner.java@62:S-unlock_250-2
+WorkerThread.java@20:R-cache_604-2-5
+CacheCleaner.java@60:W-_cleanInterval_592-2-5
+$4$
+CacheCleaner.java@62:S-lock_250-2
+CacheCleaner.java@63:R-_sleep_592-2-5
+CacheCleaner.java@62:S-unlock_250-2
+WorkerThread.java@20:R-cache_604-2-6
+CacheCleaner.java@60:W-_cleanInterval_592-2-6
+$5$
+CacheCleaner.java@62:S-lock_250-2
+CacheCleaner.java@63:R-_sleep_592-2-6
+CacheCleaner.java@62:S-unlock_250-2
+WorkerThread.java@20:R-cache_604-2-7
+CacheCleaner.java@60:W-_cleanInterval_592-2-7
+$6$
+CacheCleaner.java@62:S-lock_250-2
+CacheCleaner.java@63:R-_sleep_592-2-7
+CacheCleaner.java@62:S-unlock_250-2
+WorkerThread.java@20:R-cache_604-2-8
+CacheCleaner.java@60:W-_cleanInterval_592-2-8
+$7$
+CacheCleaner.java@62:S-lock_250-2
+CacheCleaner.java@63:R-_sleep_592-2-8
+CacheCleaner.java@62:S-unlock_250-2
+WorkerThread.java@20:R-cache_604-2-9
+CacheCleaner.java@60:W-_cleanInterval_592-2-9
+$8$
+CacheCleaner.java@62:S-lock_250-2
+CacheCleaner.java@63:R-_sleep_592-2-9
+CacheCleaner.java@62:S-unlock_250-2
+WorkerThread.java@20:R-cache_604-2-10
+CacheCleaner.java@60:W-_cleanInterval_592-2-10
+$9$
+CacheCleaner.java@62:S-lock_250-2
+CacheCleaner.java@63:R-_sleep_592-2-10
+CacheCleaner.java@65:R-inTryBlock_592-2-1
+CacheCleaner.java@62:S-unlock_250-2
+<pathjpf>
+T2:(R-sleeping_592-1-1 != CONST_0)
+T2:(R-sleeping_592-1-2 != CONST_0 )
+T2:(R-sleeping_592-1-3 != CONST_0 )
+T2:(R-sleeping_592-1-4 != CONST_0 )
+T2:(R-sleeping_592-1-5 != CONST_0 )
+T2:(R-sleeping_592-1-6 != CONST_0 )
+T2:(R-sleeping_592-1-7 != CONST_0 )
+T2:(R-sleeping_592-1-8 != CONST_0 )
+T2:(R-sleeping_592-1-9 != CONST_0 )
+T2:(R-sleeping_592-1-10 != CONST_0 )
+T2:(R-_sleep_592-2-1 == CONST_0 )
+T2:(R-_sleep_592-2-2 == CONST_0 )
+T2:(R-_sleep_592-2-3 == CONST_0 )
+T2:(R-_sleep_592-2-4 == CONST_0 )
+T2:(R-_sleep_592-2-5 == CONST_0 )
+T2:(R-_sleep_592-2-6 == CONST_0 )
+T2:(R-_sleep_592-2-7 == CONST_0 )
+T2:(R-_sleep_592-2-8 == CONST_0 )
+T2:(R-_sleep_592-2-9 == CONST_0 )
+T2:(R-_sleep_592-2-10 != CONST_0 )
+T2:(R-inTryBlock_592-2-1 == CONST_0 )
