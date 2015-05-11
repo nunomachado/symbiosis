@@ -13,4 +13,5 @@ public abstract class SymbiosisRuntime {
 	public static void threadStartRunBefore(Thread t){}
 	public static void threadStartRun()	{}
 	public static void symbiosisCaughtException() {}
+	public static void assertHandler() {}
 }

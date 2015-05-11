@@ -65,10 +65,15 @@ public class SymbBodyPass extends BodyTransformer{
 			{
 				InvokeExpr invokeExpr = ((InvokeStmt) s).getInvokeExpr();
 				String sig = invokeExpr.getMethod().getSubSignature();
+				String sig2 = invokeExpr.getMethod().getSignature();
 				String cname = ((InvokeStmt) s).getInvokeExpr().getMethod().getDeclaringClass().getName();
 				if (sig.equals("void start()") && cname.equals("java.lang.Thread")) 
 				{
 					addCallThreadStartRunBefore(units, s, ((InstanceInvokeExpr)invokeExpr).getBase());
+				}
+				else if(!SymbiosisTransformer.JPF_MODE && sig2.contains("java.lang.AssertionError: void <init>()"))
+				{
+					addCallAssertHandler(units, s);
 				}
 			}
 			//collect accesses to shared variables
@@ -210,6 +215,23 @@ public class SymbBodyPass extends BodyTransformer{
 	}
 
 
+	/**
+	 * Injects a monitor call before assertion failures
+	 * @param units
+	 * @param s
+	 * @param v
+	 */
+	public static void addCallAssertHandler(Chain units, Stmt s)
+	{
+		LinkedList args = new LinkedList();
+		String methodSig;
+		methodSig ="<" + SymbiosisTransformer.runtimeClass +": void assertHandler()>";
+
+		SootMethodRef mr = Scene.v().getMethod(methodSig).makeRef();
+		Value staticInvoke = Jimple.v().newStaticInvokeExpr(mr, args);    
+		units.insertBefore(Jimple.v().newInvokeStmt(staticInvoke), s);
+	}
+	
 	public static void checkForSharedAccesses(SootMethod sm, Stmt s)
 	{
 		if(s instanceof AssignStmt)

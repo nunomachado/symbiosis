@@ -313,7 +313,6 @@ public class SymbiosisListener extends PropertyListenerAdapter{
 			
 			// && search.getVM().getChoiceGenerator() instanceof PCChoiceGenerator){
 			PCChoiceGenerator pccg = search.getVM().getLastChoiceGeneratorOfType(PCChoiceGenerator.class);
-			
 			if (pccg != null && pccg.getThreadInfo().getName()==tid) {
 				System.out.println("PCCG THREAD INFO:" +pccg.getThreadInfo());
 				String cond = pccg.getCurrentPC().toString();
@@ -545,7 +544,12 @@ public class SymbiosisListener extends PropertyListenerAdapter{
 						if(DEBUG) 
 							System.out.println("["+getPathStateId(tid,file)+"] Log event "+event);
 					}
-				}//*/
+				}
+				if(getfieldIns.getFieldInfo().getFullName().contains("assertionsDisabled")){
+					System.out.println("Assert Thread: "+tid);
+					logSymbEvent(tid, "<assertThread_ok>"); //TODO: this is not correct, as it always logs assertThread_Ok, regardless of whether the program fails or not 
+				}
+				//*/
 			}
 			else if ((lastIns instanceof PUTSTATIC)||(lastIns instanceof PUTFIELD)){
 				FieldInstruction putfieldIns = (FieldInstruction) lastIns;
@@ -777,6 +781,7 @@ public class SymbiosisListener extends PropertyListenerAdapter{
 				//delay assertion error instruction if all threads haven't finished yet
 				if(((INVOKESPECIAL) lastIns).toString().contains("java.lang.AssertionError"))
 				{
+					logSymbEvent(tid, "<assertThread_fail>");
 					System.out.println("["+getPathStateId(tid,file)+"] Assertion Error -> proceed");
 					//check if all threads have already finished
 					/*if(threadsFinished.size()!=bbtrace.keySet().size())

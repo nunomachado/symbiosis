@@ -12,4 +12,5 @@ public abstract class InstrumentationHandler {
 	public static void threadStartRunBefore(Thread t){}
 	public static void threadStartRun()	{}
 	public static void symbiosisCaughtException() {}
+	public static void assertHandler() {}
 }

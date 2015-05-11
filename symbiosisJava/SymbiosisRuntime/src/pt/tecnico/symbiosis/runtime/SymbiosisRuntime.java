@@ -124,10 +124,20 @@ public class SymbiosisRuntime {
 		}
 	}
 	
+	public static void assertHandler()
+	{
+		Main.tracefile += ".fail";
+		
+	}
 	
 	public static void saveTrace()
 	{
 		try {
+			
+			if(!Main.tracefile.endsWith(".fail")){
+				Main.tracefile += ".ok";
+			}
+			
 			OutputStreamWriter outstream = new OutputStreamWriter(new FileOutputStream(Main.tracefile));
 			
 			l.lock();
