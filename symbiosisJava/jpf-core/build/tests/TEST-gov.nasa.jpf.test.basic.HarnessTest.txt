@@ -1,0 +1,96 @@
+Testsuite: gov.nasa.jpf.test.basic.HarnessTest
+Tests run: 6, Failures: 1, Errors: 0, Time elapsed: 1.415 sec
+------------- Standard Output ---------------
+  running jpf with args: gov.nasa.jpf.util.test.TestJPFHelper gov.nasa.jpf.test.basic.HarnessTest recursive
+JavaPathfinder v6.0 (rev ${version}) - (C) RIACS/NASA Ames Research Center
+
+
+====================================================== system under test
+application: gov/nasa/jpf/util/test/TestJPFHelper.java
+arguments:   gov.nasa.jpf.test.basic.HarnessTest recursive 
+
+====================================================== search started: 2/10/15 5:08 PM
+** this is low level API recursive - it should succeed
+
+====================================================== results
+no errors detected
+
+====================================================== search finished: 2/10/15 5:08 PM
+  running jpf with args: gov.nasa.jpf.util.test.TestJPFHelper gov.nasa.jpf.test.basic.HarnessTest verifyAssert
+JavaPathfinder v6.0 (rev ${version}) - (C) RIACS/NASA Ames Research Center
+
+
+====================================================== system under test
+application: gov/nasa/jpf/util/test/TestJPFHelper.java
+arguments:   gov.nasa.jpf.test.basic.HarnessTest verifyAssert 
+
+====================================================== search started: 2/10/15 5:08 PM
+** this is verifyAssert() - JPF should find an AssertionError
+
+====================================================== results
+no errors detected
+
+====================================================== search finished: 2/10/15 5:08 PM
+  running jpf with args: gov.nasa.jpf.util.test.TestJPFHelper gov.nasa.jpf.test.basic.HarnessTest verifyNullPointerException
+JavaPathfinder v6.0 (rev ${version}) - (C) RIACS/NASA Ames Research Center
+
+
+====================================================== system under test
+application: gov/nasa/jpf/util/test/TestJPFHelper.java
+arguments:   gov.nasa.jpf.test.basic.HarnessTest verifyNullPointerException 
+
+====================================================== search started: 2/10/15 5:08 PM
+** this is verifyNullPointerException() - JPF should find an NPE
+
+====================================================== results
+no errors detected
+
+====================================================== search finished: 2/10/15 5:08 PM
+  running jpf with args: gov.nasa.jpf.util.test.TestJPFHelper gov.nasa.jpf.test.basic.HarnessTest verifyRuntimeException
+JavaPathfinder v6.0 (rev ${version}) - (C) RIACS/NASA Ames Research Center
+
+
+====================================================== system under test
+application: gov/nasa/jpf/util/test/TestJPFHelper.java
+arguments:   gov.nasa.jpf.test.basic.HarnessTest verifyRuntimeException 
+
+====================================================== search started: 2/10/15 5:08 PM
+** this is verifyRuntimeException() - JPF should find an unhandled exception
+
+====================================================== results
+no errors detected
+
+====================================================== search finished: 2/10/15 5:08 PM
+  running jpf with args: +vm.class=InvalidVMClass +pass_exceptions gov.nasa.jpf.util.test.TestJPFHelper gov.nasa.jpf.test.basic.HarnessTest verifyJPFExcept
+[SEVERE] JPF configuration error: class not found InvalidVMClass by classloader: gov.nasa.jpf.JPFClassLoader@6ecbd0a2
+  running jpf with args: gov.nasa.jpf.util.test.TestJPFHelper gov.nasa.jpf.test.basic.HarnessTest noViolation
+JavaPathfinder v6.0 (rev ${version}) - (C) RIACS/NASA Ames Research Center
+
+
+====================================================== system under test
+application: gov/nasa/jpf/util/test/TestJPFHelper.java
+arguments:   gov.nasa.jpf.test.basic.HarnessTest noViolation 
+
+====================================================== search started: 2/10/15 5:08 PM
+** this is noViolation() - it should succeed
+
+====================================================== results
+no errors detected
+
+====================================================== search finished: 2/10/15 5:08 PM
+------------- ---------------- ---------------
+
+Testcase: recursive took 0.62 sec
+Testcase: verifyAssert took 0.313 sec
+Testcase: verifyNullPointerException took 0.142 sec
+Testcase: verifyRuntimeException took 0.18 sec
+	FAILED
+JPF failed to detect error: gov.nasa.jpf.jvm.NoUncaughtExceptionsProperty
+junit.framework.AssertionFailedError: JPF failed to detect error: gov.nasa.jpf.jvm.NoUncaughtExceptionsProperty
+	at gov.nasa.jpf.util.test.TestJPF.fail(TestJPF.java:156)
+	at gov.nasa.jpf.util.test.TestJPF.propertyViolation(TestJPF.java:901)
+	at gov.nasa.jpf.util.test.TestJPF.verifyPropertyViolation(TestJPF.java:913)
+	at gov.nasa.jpf.test.basic.HarnessTest.verifyRuntimeException(HarnessTest.java:47)
+
+Testcase: verifyJPFExcept took 0.01 sec
+Testcase: noViolation took 0.128 sec

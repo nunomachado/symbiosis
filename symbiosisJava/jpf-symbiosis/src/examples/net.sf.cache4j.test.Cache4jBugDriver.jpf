@@ -1,0 +1,16 @@
+target=net.sf.cache4j.test.Cache4jBugDriver
+#target_args=
+classpath=/home/symbiosis/work/symbiosisJava/SymbiosisTransformer/SymbiosisJPF;\
+		  /home/symbiosis/work/symbiosisJava/jpf-symbiosis/build/main;\
+		  /home/symbiosis/work/symbiosisJava/jpf-core/build/main;\
+		  /home/symbiosis/work/symbiosisJava/jpf-symbc/build/main;\
+	  	/home/symbiosis/work/symbiosisJava/Tests/cache4j/bin;
+sourcepath=/home/symbiosis/work/symbiosisJava/Tests/cache4j/src
+symbolic.dp=no_solver
+#symbolic.string_dp=automata
+symbolic.string_dp_timeout_ms=0
+#vm.por.sync_detection=false
+listener=pt.tecnico.jpf.symbiosis.SymbiosisListener
+symbiosis.bbtrace=/home/symbiosis/work/symbiosisJava/SymbiosisRuntime/traces/net.sf.cache4j.test.Cache4jBugDriver.traceBB
+symbiosis.sharedAccesses=/home/symbiosis/work/symbiosisJava/SymbiosisTransformer/SymbiosisJPF/net.sf.cache4j.test.Cache4jBugDriver.accesses
+symbiosis.tracefolder=/home/symbiosis/work/symbiosisJava/jpf-symbiosis/traces/cache4j/

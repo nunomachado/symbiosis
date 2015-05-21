@@ -1,0 +1,346 @@
+Testsuite: gov.nasa.jpf.ConfigTest
+Tests run: 9, Failures: 0, Errors: 0, Time elapsed: 0.122 sec
+------------- Standard Output ---------------
+loading property file: src/tests/gov/nasa/jpf/configTestSite.properties
+loading property file: /home/symbiosis/work/symbiosisJava/jpf-core/jpf.properties
+loading property file: src/tests/gov/nasa/jpf/configTestIncludes.jpf
+loading property file: /home/symbiosis/work/symbiosisJava/jpf-core/src/tests/gov/nasa/jpf/configTestCommon.jpf
+got my.common = whatever
+loading property file: src/tests/gov/nasa/jpf/configTestSite.properties
+loading property file: /home/symbiosis/work/symbiosisJava/jpf-core/jpf.properties
+loading property file: src/tests/gov/nasa/jpf/configTestApp.jpf
+----------- Config contents
+branch_start = 1
+cg.boolean.false_first = true
+cg.break_single_choice = false
+cg.enable_atomic = true
+cg.enumerate_random = false
+cg.max_processors = 1
+cg.randomize_choices = NONE
+cg.seed = 42
+cg.threads.break_arrays = false
+cg.threads.break_sleep = true
+cg.threads.break_start = true
+cg.threads.break_yield = true
+config = /home/symbiosis/work/symbiosisJava/jpf-core/src/tests/gov/nasa/jpf/configTestApp.jpf
+config_path = /home/symbiosis/work/symbiosisJava/jpf-core/src/tests/gov/nasa/jpf
+ext.numeric = /Users/pcmehlitz/projects/jpf-v5/jpf-numeric
+ext.swing = /Users/pcmehlitz/projects/jpf-v5/jpf-swing
+extensions = ,/Users/pcmehlitz/projects/jpf-v5/jpf-numeric,/Users/pcmehlitz/projects/jpf-v5/jpf-swing
+jpf-core = /home/symbiosis/work/symbiosisJava/jpf-core
+jpf-core.classpath = /home/symbiosis/work/symbiosisJava/jpf-core/build/jpf-classes.jar;/home/symbiosis/work/symbiosisJava/jpf-core/build/examples
+jpf-core.native_classpath = /home/symbiosis/work/symbiosisJava/jpf-core/build/jpf.jar;/home/symbiosis/work/symbiosisJava/jpf-core/build/jpf-annotations.jar;/home/symbiosis/work/symbiosisJava/jpf-core/lib/junit-4.10.jar
+jpf-core.peer_packages = gov.nasa.jpf.jvm,<model>,<default>
+jpf-core.sourcepath = /home/symbiosis/work/symbiosisJava/jpf-core/src/examples
+jpf-core.test_classpath = /home/symbiosis/work/symbiosisJava/jpf-core/build/tests
+jpf.app = src/tests/gov/nasa/jpf/configTestApp.jpf
+jpf.core = /Users/pcmehlitz/projects/jpf-v5/jpf-core
+jpf.print_exception_stack = true
+jpf.root = /Users/pcmehlitz/projects/jpf-v5
+jpf.site = src/tests/gov/nasa/jpf/configTestSite.properties
+listener.autoload = gov.nasa.jpf.NonNull,gov.nasa.jpf.Const
+listener.gov.nasa.jpf.Const = gov.nasa.jpf.tools.ConstChecker
+listener.gov.nasa.jpf.NonNull = gov.nasa.jpf.tools.NonNullChecker
+log.handler.class = gov.nasa.jpf.util.LogHandler
+log.level = warning
+mySUT.location = /home/symbiosis/work/symbiosisJava/jpf-core/src/tests/gov/nasa/jpf
+name = mySUT
+race.exclude = java.*,javax.*
+report.class = gov.nasa.jpf.report.Reporter
+report.console.class = gov.nasa.jpf.report.ConsolePublisher
+report.console.constraint = constraint,snapshot
+report.console.finished = result,statistics
+report.console.property_violation = error,snapshot
+report.console.show_code = false
+report.console.show_method = true
+report.console.show_steps = true
+report.console.start = jpf,sut
+report.console.transition = 
+report.html.class = gov.nasa.jpf.report.HTMLPublisher
+report.html.constraint = constraint
+report.html.finished = result,statistics,error,snapshot,output
+report.html.property_violation = 
+report.html.start = jpf,sut,platform,user,dtg,config
+report.publisher = console
+report.xml.class = gov.nasa.jpf.report.XMLPublisher
+search.class = gov.nasa.jpf.search.heuristic.DFSHeuristic
+search.heuristic.branch.count_early = true
+search.heuristic.branch.no_branch_return = -1
+search.heuristic.queue_limit = -1
+search.match_depth = false
+search.min_free = 1M
+search.multiple_errors = false
+search.properties = gov.nasa.jpf.jvm.NotDeadlockedProperty,
+target = urgh.org.MySystemUnderTest
+target_args = a,b,c
+test.report.console.finished = result
+vm.attributor.class = gov.nasa.jpf.jvm.DefaultAttributor
+vm.backtracker.class = gov.nasa.jpf.jvm.DefaultBacktracker
+vm.class = gov.nasa.jpf.jvm.JVM
+vm.fields_factory.class = gov.nasa.jpf.jvm.DefaultFieldsFactory
+vm.finalize = false
+vm.gc = true
+vm.heap.class = gov.nasa.jpf.jvm.SparseClusterArrayHeap
+vm.ignore_uncaught_handler = false
+vm.insn_factory.class = gov.nasa.jpf.jvm.bytecode.InstructionFactory
+vm.max_alloc_gc = -1
+vm.max_transition_length = 5000
+vm.no_orphan_methods = false
+vm.pass_uncaught_handler = true
+vm.path_output = false
+vm.por = true
+vm.por.field_boundaries = true
+vm.por.field_boundaries.break = 
+vm.por.field_boundaries.never = java.*,javax.*,sun.*
+vm.por.fli_factory.class = gov.nasa.jpf.jvm.StatisticFieldLockInfoFactory
+vm.por.skip_constructed_finals = false
+vm.por.skip_finals = true
+vm.por.skip_static_finals = false
+vm.por.sync_detection = true
+vm.restorer.class = .jvm.DefaultMementoRestorer
+vm.reuse_tid = false
+vm.scheduler_factory.class = gov.nasa.jpf.jvm.DefaultSchedulerFactory
+vm.serializer.class = gov.nasa.jpf.jvm.serialize.CFSerializer
+vm.static.class = gov.nasa.jpf.jvm.StaticArea
+vm.storage.class = gov.nasa.jpf.jvm.JenkinsStateSet
+vm.store_steps = false
+vm.sysprop.source = SELECTED
+vm.threadlist.class = gov.nasa.jpf.jvm.ThreadList
+vm.time.class = gov.nasa.jpf.jvm.SystemTime
+vm.tree_output = true
+vm.untracked = true
+vm.verify.ignore_path = true
+loading property file: /home/symbiosis/.jpf/site.properties
+loading property file: /home/symbiosis/work/symbiosisJava/jpf-core/jpf.properties
+loading property file: /home/symbiosis/.jpf/site.properties
+loading property file: /home/symbiosis/work/symbiosisJava/jpf-core/jpf.properties
+loading property file: src/tests/gov/nasa/jpf/configTestApp.jpf
+loading property file: src/tests/gov/nasa/jpf/configTestSite.properties
+loading property file: /home/symbiosis/work/symbiosisJava/jpf-core/jpf.properties
+loading property file: src/tests/gov/nasa/jpf/configTestRequires.jpf
+got whoa = boa
+loading property file: src/tests/gov/nasa/jpf/configTestSite.properties
+loading property file: /home/symbiosis/work/symbiosisJava/jpf-core/jpf.properties
+loading property file: src/tests/gov/nasa/jpf/configTestRequiresFail.jpf
+missing required key: thisDoesNotExist, skipping: src/tests/gov/nasa/jpf/configTestRequiresFail.jpf
+got whoa = null
+loading property file: src/tests/gov/nasa/jpf/configTestSite.properties
+loading property file: /home/symbiosis/work/symbiosisJava/jpf-core/jpf.properties
+loading property file: src/tests/gov/nasa/jpf/configTestApp.jpf
+----------- Config contents
+branch_start = 1
+cg.boolean.false_first = true
+cg.break_single_choice = false
+cg.enable_atomic = true
+cg.enumerate_random = false
+cg.max_processors = 1
+cg.randomize_choices = NONE
+cg.seed = 42
+cg.threads.break_arrays = false
+cg.threads.break_sleep = true
+cg.threads.break_start = true
+cg.threads.break_yield = true
+config = /home/symbiosis/work/symbiosisJava/jpf-core/src/tests/gov/nasa/jpf/configTestApp.jpf
+config_path = /home/symbiosis/work/symbiosisJava/jpf-core/src/tests/gov/nasa/jpf
+ext.numeric = /Users/pcmehlitz/projects/jpf-v5/jpf-numeric
+ext.swing = /Users/pcmehlitz/projects/jpf-v5/jpf-swing
+extensions = ,/Users/pcmehlitz/projects/jpf-v5/jpf-numeric,/Users/pcmehlitz/projects/jpf-v5/jpf-swing
+jpf-core = /home/symbiosis/work/symbiosisJava/jpf-core
+jpf-core.classpath = /home/symbiosis/work/symbiosisJava/jpf-core/build/jpf-classes.jar;/home/symbiosis/work/symbiosisJava/jpf-core/build/examples
+jpf-core.native_classpath = /home/symbiosis/work/symbiosisJava/jpf-core/build/jpf.jar;/home/symbiosis/work/symbiosisJava/jpf-core/build/jpf-annotations.jar;/home/symbiosis/work/symbiosisJava/jpf-core/lib/junit-4.10.jar
+jpf-core.peer_packages = gov.nasa.jpf.jvm,<model>,<default>
+jpf-core.sourcepath = /home/symbiosis/work/symbiosisJava/jpf-core/src/examples
+jpf-core.test_classpath = /home/symbiosis/work/symbiosisJava/jpf-core/build/tests
+jpf.app = src/tests/gov/nasa/jpf/configTestApp.jpf
+jpf.core = /Users/pcmehlitz/projects/jpf-v5/jpf-core
+jpf.print_exception_stack = true
+jpf.root = /Users/pcmehlitz/projects/jpf-v5
+jpf.site = src/tests/gov/nasa/jpf/configTestSite.properties
+listener.autoload = gov.nasa.jpf.NonNull,gov.nasa.jpf.Const
+listener.gov.nasa.jpf.Const = gov.nasa.jpf.tools.ConstChecker
+listener.gov.nasa.jpf.NonNull = gov.nasa.jpf.tools.NonNullChecker
+log.handler.class = gov.nasa.jpf.util.LogHandler
+log.level = warning
+mySUT.location = /home/symbiosis/work/symbiosisJava/jpf-core/src/tests/gov/nasa/jpf
+name = mySUT
+race.exclude = java.*,javax.*
+report.class = gov.nasa.jpf.report.Reporter
+report.console.class = gov.nasa.jpf.report.ConsolePublisher
+report.console.constraint = constraint,snapshot
+report.console.finished = result,statistics
+report.console.property_violation = error,snapshot
+report.console.show_code = false
+report.console.show_method = true
+report.console.show_steps = true
+report.console.start = jpf,sut
+report.console.transition = 
+report.html.class = gov.nasa.jpf.report.HTMLPublisher
+report.html.constraint = constraint
+report.html.finished = result,statistics,error,snapshot,output
+report.html.property_violation = 
+report.html.start = jpf,sut,platform,user,dtg,config
+report.publisher = console
+report.xml.class = gov.nasa.jpf.report.XMLPublisher
+search.class = gov.nasa.jpf.search.heuristic.DFSHeuristic
+search.heuristic.branch.count_early = true
+search.heuristic.branch.no_branch_return = -1
+search.heuristic.queue_limit = -1
+search.match_depth = false
+search.min_free = 1M
+search.multiple_errors = false
+search.properties = gov.nasa.jpf.jvm.NotDeadlockedProperty,
+target = urgh.org.MySystemUnderTest
+target_args = a,b,c
+test.report.console.finished = result
+vm.attributor.class = gov.nasa.jpf.jvm.DefaultAttributor
+vm.backtracker.class = gov.nasa.jpf.jvm.DefaultBacktracker
+vm.class = gov.nasa.jpf.jvm.JVM
+vm.fields_factory.class = gov.nasa.jpf.jvm.DefaultFieldsFactory
+vm.finalize = false
+vm.gc = true
+vm.heap.class = gov.nasa.jpf.jvm.SparseClusterArrayHeap
+vm.ignore_uncaught_handler = false
+vm.insn_factory.class = gov.nasa.jpf.jvm.bytecode.InstructionFactory
+vm.max_alloc_gc = -1
+vm.max_transition_length = 5000
+vm.no_orphan_methods = false
+vm.pass_uncaught_handler = true
+vm.path_output = false
+vm.por = true
+vm.por.field_boundaries = true
+vm.por.field_boundaries.break = 
+vm.por.field_boundaries.never = java.*,javax.*,sun.*
+vm.por.fli_factory.class = gov.nasa.jpf.jvm.StatisticFieldLockInfoFactory
+vm.por.skip_constructed_finals = false
+vm.por.skip_finals = true
+vm.por.skip_static_finals = false
+vm.por.sync_detection = true
+vm.restorer.class = .jvm.DefaultMementoRestorer
+vm.reuse_tid = false
+vm.scheduler_factory.class = gov.nasa.jpf.jvm.DefaultSchedulerFactory
+vm.serializer.class = gov.nasa.jpf.jvm.serialize.CFSerializer
+vm.static.class = gov.nasa.jpf.jvm.StaticArea
+vm.storage.class = gov.nasa.jpf.jvm.JenkinsStateSet
+vm.store_steps = false
+vm.sysprop.source = SELECTED
+vm.threadlist.class = gov.nasa.jpf.jvm.ThreadList
+vm.time.class = gov.nasa.jpf.jvm.SystemTime
+vm.tree_output = true
+vm.untracked = true
+vm.verify.ignore_path = true
+loading property file: /home/symbiosis/.jpf/site.properties
+loading property file: /home/symbiosis/work/symbiosisJava/jpf-core/jpf.properties
+loading property file: src/tests/gov/nasa/jpf/configTestApp.jpf
+----------- Config contents
+branch_start = 1
+cg.boolean.false_first = true
+cg.break_single_choice = false
+cg.enable_atomic = true
+cg.enumerate_random = false
+cg.max_processors = 1
+cg.randomize_choices = NONE
+cg.seed = 42
+cg.threads.break_arrays = false
+cg.threads.break_sleep = true
+cg.threads.break_start = true
+cg.threads.break_yield = true
+config = /home/symbiosis/work/symbiosisJava/jpf-core/src/tests/gov/nasa/jpf/configTestApp.jpf
+config_path = /home/symbiosis/work/symbiosisJava/jpf-core/src/tests/gov/nasa/jpf
+jpf-concurrent = /home/symbiosis/work/symbiosisJava/jpf-concurrent
+jpf-core = /home/symbiosis/work/symbiosisJava/jpf-core
+jpf-core.classpath = /home/symbiosis/work/symbiosisJava/jpf-core/build/jpf-classes.jar;/home/symbiosis/work/symbiosisJava/jpf-core/build/examples
+jpf-core.native_classpath = /home/symbiosis/work/symbiosisJava/jpf-core/build/jpf.jar;/home/symbiosis/work/symbiosisJava/jpf-core/build/jpf-annotations.jar;/home/symbiosis/work/symbiosisJava/jpf-core/lib/junit-4.10.jar
+jpf-core.peer_packages = gov.nasa.jpf.jvm,<model>,<default>
+jpf-core.sourcepath = /home/symbiosis/work/symbiosisJava/jpf-core/src/examples
+jpf-core.test_classpath = /home/symbiosis/work/symbiosisJava/jpf-core/build/tests
+jpf-symbc = /home/symbiosis/work/symbiosisJava/jpf-symbc
+jpf-symbiosis = /home/symbiosis/work/symbiosisJava/jpf-symbiosis
+jpf.app = src/tests/gov/nasa/jpf/configTestApp.jpf
+jpf.home = /home/symbiosis/work/symbiosisJava
+jpf.print_exception_stack = true
+jpf.site = /home/symbiosis/.jpf/site.properties
+listener.autoload = gov.nasa.jpf.NonNull,gov.nasa.jpf.Const
+listener.gov.nasa.jpf.Const = gov.nasa.jpf.tools.ConstChecker
+listener.gov.nasa.jpf.NonNull = gov.nasa.jpf.tools.NonNullChecker
+log.handler.class = gov.nasa.jpf.util.LogHandler
+log.level = warning
+mySUT.location = /home/symbiosis/work/symbiosisJava/jpf-core/src/tests/gov/nasa/jpf
+name = mySUT
+race.exclude = java.*,javax.*
+report.class = gov.nasa.jpf.report.Reporter
+report.console.class = gov.nasa.jpf.report.ConsolePublisher
+report.console.constraint = constraint,snapshot
+report.console.finished = result,statistics
+report.console.property_violation = error,snapshot
+report.console.show_code = false
+report.console.show_method = true
+report.console.show_steps = true
+report.console.start = jpf,sut
+report.console.transition = 
+report.html.class = gov.nasa.jpf.report.HTMLPublisher
+report.html.constraint = constraint
+report.html.finished = result,statistics,error,snapshot,output
+report.html.property_violation = 
+report.html.start = jpf,sut,platform,user,dtg,config
+report.publisher = console
+report.xml.class = gov.nasa.jpf.report.XMLPublisher
+search.class = gov.nasa.jpf.search.heuristic.DFSHeuristic
+search.heuristic.branch.count_early = true
+search.heuristic.branch.no_branch_return = -1
+search.heuristic.queue_limit = -1
+search.match_depth = false
+search.min_free = 1M
+search.multiple_errors = false
+search.properties = gov.nasa.jpf.jvm.NotDeadlockedProperty,
+target = urgh.org.MySystemUnderTest
+target_args = x,y
+test.report.console.finished = result
+vm.attributor.class = gov.nasa.jpf.jvm.DefaultAttributor
+vm.backtracker.class = gov.nasa.jpf.jvm.DefaultBacktracker
+vm.class = gov.nasa.jpf.jvm.JVM
+vm.fields_factory.class = gov.nasa.jpf.jvm.DefaultFieldsFactory
+vm.finalize = false
+vm.gc = true
+vm.heap.class = gov.nasa.jpf.jvm.SparseClusterArrayHeap
+vm.ignore_uncaught_handler = false
+vm.insn_factory.class = gov.nasa.jpf.jvm.bytecode.InstructionFactory
+vm.max_alloc_gc = -1
+vm.max_transition_length = 5000
+vm.no_orphan_methods = false
+vm.pass_uncaught_handler = true
+vm.path_output = false
+vm.por = true
+vm.por.field_boundaries = true
+vm.por.field_boundaries.break = 
+vm.por.field_boundaries.never = java.*,javax.*,sun.*
+vm.por.fli_factory.class = gov.nasa.jpf.jvm.StatisticFieldLockInfoFactory
+vm.por.skip_constructed_finals = false
+vm.por.skip_finals = true
+vm.por.skip_static_finals = false
+vm.por.sync_detection = true
+vm.restorer.class = .jvm.DefaultMementoRestorer
+vm.reuse_tid = false
+vm.scheduler_factory.class = gov.nasa.jpf.jvm.DefaultSchedulerFactory
+vm.serializer.class = gov.nasa.jpf.jvm.serialize.CFSerializer
+vm.static.class = gov.nasa.jpf.jvm.StaticArea
+vm.storage.class = gov.nasa.jpf.jvm.JenkinsStateSet
+vm.store_steps = false
+vm.sysprop.source = SELECTED
+vm.threadlist.class = gov.nasa.jpf.jvm.ThreadList
+vm.time.class = gov.nasa.jpf.jvm.SystemTime
+vm.tree_output = true
+vm.untracked = true
+vm.verify.ignore_path = true
+loading property file: src/tests/gov/nasa/jpf/configTestSite.properties
+loading property file: /home/symbiosis/work/symbiosisJava/jpf-core/jpf.properties
+------------- ---------------- ---------------
+
+Testcase: testIncludes took 0.022 sec
+Testcase: testClassPaths took 0.009 sec
+Testcase: testDefaultExplicitTargetInit took 0.005 sec
+Testcase: testDefaultAppPropertyInit took 0.003 sec
+Testcase: testRequiresOk took 0.007 sec
+Testcase: testRequiresFail took 0.004 sec
+Testcase: testExplicitLocations took 0.022 sec
+Testcase: testTargetArgsOverride took 0.024 sec
+Testcase: testIntArray took 0.009 sec

@@ -1,0 +1,15 @@
+Testsuite: gov.nasa.jpf.jvm.ClassInfoTest
+Tests run: 1, Failures: 0, Errors: 0, Time elapsed: 0.158 sec
+------------- Standard Output ---------------
+-- declared instance fields
+java.lang.String s
+
+-- methods
+<init>(Ljava/lang/String;)V
+whatIsIt()I
+isItTheAnswer(ZILjava/lang/String;)Z
+foo()V
+getString()Ljava/lang/String;
+------------- ---------------- ---------------
+
+Testcase: testClassFileInitialization took 0.149 sec

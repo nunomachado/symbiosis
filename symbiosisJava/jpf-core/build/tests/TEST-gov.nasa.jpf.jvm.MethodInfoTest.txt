@@ -1,0 +1,21 @@
+Testsuite: gov.nasa.jpf.jvm.MethodInfoTest
+Tests run: 1, Failures: 0, Errors: 0, Time elapsed: 0.075 sec
+------------- Standard Output ---------------
+-- checking: MethodInfo[gov.nasa.jpf.jvm.MethodInfoTest$MyClass.staticNoArgs()D]
+-- checking: MethodInfo[gov.nasa.jpf.jvm.MethodInfoTest$MyClass.staticInt(I)D]
+     LocalVarInfo[name="intArg",signature="I",startPC=0,endPC=13,slotIndex=0]
+-- checking: MethodInfo[gov.nasa.jpf.jvm.MethodInfoTest$MyClass.staticIntString(ILjava/lang/String;)D]
+     LocalVarInfo[name="intArg",signature="I",startPC=0,endPC=13,slotIndex=0]
+     LocalVarInfo[name="stringArg",signature="Ljava/lang/String;",startPC=0,endPC=13,slotIndex=1]
+-- checking: MethodInfo[gov.nasa.jpf.jvm.MethodInfoTest$MyClass.instanceNoArgs()D]
+     LocalVarInfo[name="this",signature="Lgov/nasa/jpf/jvm/MethodInfoTest$MyClass;",startPC=0,endPC=13,slotIndex=0]
+-- checking: MethodInfo[gov.nasa.jpf.jvm.MethodInfoTest$MyClass.instanceInt(I)D]
+     LocalVarInfo[name="this",signature="Lgov/nasa/jpf/jvm/MethodInfoTest$MyClass;",startPC=0,endPC=13,slotIndex=0]
+     LocalVarInfo[name="intArg",signature="I",startPC=0,endPC=13,slotIndex=1]
+-- checking: MethodInfo[gov.nasa.jpf.jvm.MethodInfoTest$MyClass.instanceIntString(ILjava/lang/String;)D]
+     LocalVarInfo[name="this",signature="Lgov/nasa/jpf/jvm/MethodInfoTest$MyClass;",startPC=0,endPC=17,slotIndex=0]
+     LocalVarInfo[name="intArg",signature="I",startPC=0,endPC=17,slotIndex=1]
+     LocalVarInfo[name="stringArg",signature="Ljava/lang/String;",startPC=0,endPC=17,slotIndex=2]
+------------- ---------------- ---------------
+
+Testcase: testMethodArgs took 0.066 sec

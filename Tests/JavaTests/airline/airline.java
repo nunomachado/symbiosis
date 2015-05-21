@@ -80,6 +80,7 @@ public  class airline implements Runnable{
 		}
 		String str1="< "+fileName+" , Concurency="+Concurency+" , "+"No Error"+" >";
 		String str2="< "+fileName+" , Concurency="+Concurency+" , "+"Interleaving Bug"+" >";
+
 		try{
 			System.out.println("SOLD "+ Num_Of_Seats_Sold + " Seats !!!");
 			assert(Num_Of_Seats_Sold <= Maximum_Capacity);
@@ -111,8 +112,7 @@ public  class airline implements Runnable{
 
 		Num_Of_Seats_Sold++;                          // making the sale
 		//bug here!
-		try {Thread.currentThread().sleep(10);}
-        catch (InterruptedException e) {}
+		try {Thread.currentThread().sleep(10);} catch (InterruptedException e) {}
 		if (Num_Of_Seats_Sold > Maximum_Capacity){     // checking
 			System.out.println("maximum capacity exceeded, "+Num_Of_Seats_Sold +" sold");
 			StopSales = true;                   // updating

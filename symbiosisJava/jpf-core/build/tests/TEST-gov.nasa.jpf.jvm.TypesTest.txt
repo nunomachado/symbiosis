@@ -1,0 +1,9 @@
+Testsuite: gov.nasa.jpf.jvm.TypesTest
+Tests run: 1, Failures: 0, Errors: 0, Time elapsed: 0.014 sec
+------------- Standard Output ---------------
+int foo(int,java.lang.String) => foo(ILjava/lang/String;)I
+double[] what_ever (char[], X ) => what_ever([CLX;)[D
+bar() => bar()
+------------- ---------------- ---------------
+
+Testcase: testGetSignatureName took 0.002 sec

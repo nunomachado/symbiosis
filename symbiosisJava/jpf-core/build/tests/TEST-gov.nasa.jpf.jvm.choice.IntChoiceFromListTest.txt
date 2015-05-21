@@ -1,0 +1,6 @@
+Testsuite: gov.nasa.jpf.jvm.choice.IntChoiceFromListTest
+Tests run: 3, Failures: 0, Errors: 0, Time elapsed: 0.021 sec
+
+Testcase: testListWithOutDuplicates took 0.003 sec
+Testcase: testListWithDuplicates took 0 sec
+Testcase: testListWithDuplicates2 took 0 sec

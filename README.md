@@ -1,6 +1,8 @@
 # Symbiosis Tutorial
 Symbiosis - Concurrency Debugging via Differential Schedule Projections
 
+### Download VM with everything already set up here: http://www.gsd.inesc-id.pt/~nmachado/software/Symbiosis_Tutorial.html 
+
 ## Symbiosis for C/C++
 
 ### Installation 
@@ -59,3 +61,19 @@ If the solver finds a valid alternate schedule, it will output a graphviz file c
 $ cd ./tmp/DSP
 $ dot -Tps dsp_failCrasher_Alt0.gv -o dsp_failCrasher_Alt0.ps
 ```
+
+
+## Symbiosis for Java
+Symbiosis for Java works on top of Soot (for instrumentation) and JavaPathFinder (for symbolic execution). It might not work well with versions of Java greater than Java 1.6.
+
+### Example: Airline
+* Instrument program:
+```
+$ cd symbiosisJava
+$ ./instrument.sh airline.airline 
+```
+* Run instrumented version:
+```
+$ ./runtime.sh airline.airline out.txt little 
+```
+This will create an execution path trace in folder symbiosisJava/SymbiosisRuntime/traces with extension **.ok** (in case of a successful execution) or **.fail** (in case of a failing execution). 

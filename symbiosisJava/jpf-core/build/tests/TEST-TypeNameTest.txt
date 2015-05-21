@@ -1,0 +1,20 @@
+Testsuite: TypeNameTest
+Tests run: 1, Failures: 0, Errors: 0, Time elapsed: 1.439 sec
+------------- Standard Output ---------------
+  running jpf with args: gov.nasa.jpf.util.test.TestJPFHelper TypeNameTest testArrayCloning
+JavaPathfinder v6.0 (rev ${version}) - (C) RIACS/NASA Ames Research Center
+
+
+====================================================== system under test
+application: gov/nasa/jpf/util/test/TestJPFHelper.java
+arguments:   TypeNameTest testArrayCloning 
+
+====================================================== search started: 2/10/15 5:08 PM
+
+====================================================== results
+no errors detected
+
+====================================================== search finished: 2/10/15 5:08 PM
+------------- ---------------- ---------------
+
+Testcase: testArrayCloning took 1.378 sec
