@@ -1,7 +1,9 @@
 # Symbiosis Tutorial
 Symbiosis - Concurrency Debugging via Differential Schedule Projections
 
-### Download VM with everything already set up here: http://www.gsd.inesc-id.pt/~nmachado/software/Symbiosis_Tutorial.html 
+## Consider using [Cortex](https://github.com/nunomachado/cortex-tool), a tool that extends Symbiosis to expose new concurrency bugs, in addition to finding their root cause. 
+
+Download VM with everything already set up here: http://www.gsd.inesc-id.pt/~nmachado/software/Symbiosis_Tutorial.html 
 
 ## Symbiosis for C/C++
 
