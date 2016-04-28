@@ -1,6 +1,6 @@
 # Symbiosis Tutorial
 
-### Consider using [Cortex](https://github.com/nunomachado/cortex-tool), a tool that extends Symbiosis to expose concurrency bugs (that may depend on both the path and the schedule), in addition to finding their root cause.###
+#### Consider using [Cortex](https://github.com/nunomachado/cortex-tool), a tool that extends Symbiosis to expose concurrency bugs (that may depend on both the path and the schedule), in addition to finding their root cause.####
 
 Symbiosis is a tool to help developers diagnose concurrency bugs by computing differential schedule projections. For more information check our [PLDI'15 paper](http://www.gsd.inesc-id.pt/~nmachado/papers/pldi15-nmachado.pdf).
 
