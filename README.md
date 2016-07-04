@@ -9,9 +9,9 @@ Symbiosis is a tool to help developers diagnose concurrency bugs by computing di
 Download VM with everything already set up here: http://www.gsd.inesc-id.pt/~nmachado/software/Symbiosis_Tutorial.html 
 
 ### Installation 
-* Install **LLVM-2.9**, **STP**, and **uclibc** as described at http://klee.github.io/getting-started/
+* Install **LLVM-2.9**, **STP**, and **uclibc** as described at http://klee.github.io/build-llvm29/
 * Download the Z3 solver version corresponding to your OS from: https://github.com/Z3Prover/z3/wiki
-* Download and install Grphviz from: http://www.graphviz.org/Download..php
+* Download and install Graphviz from: http://www.graphviz.org/Download.php
 * Build Symbiosis LLVM Pass as indicated by the instructions in folder **Instrumentation**.
 * Build SymbiosisRuntime:
 ```
