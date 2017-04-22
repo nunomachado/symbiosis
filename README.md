@@ -6,7 +6,7 @@ Symbiosis is a tool to help developers diagnose concurrency bugs by computing di
 
 ## Symbiosis for C/C++
 
-Download VM with everything already set up here: http://homepages.gsd.inesc-id.pt/nmachado/symbiosisT_vm.ova 
+Download VM with everything already set up here: http://homepages.gsd.inesc-id.pt/~nmachado/symbiosisT_vm.ova 
 
 ### Installation 
 * Install **LLVM-2.9**, **STP**, and **uclibc** as described at http://klee.github.io/build-llvm29/
